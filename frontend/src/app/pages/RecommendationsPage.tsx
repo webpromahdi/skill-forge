@@ -1,117 +1,55 @@
-import { useState } from "react";
+// ─── Recommendations Page ────────────────────────────────────────────────────
+// Displays AI-generated learning recommendations fetched from the backend.
+//
+// AI Recommendation Workflow — UI layer:
+//   1. Page mounts → getRecommendations() → GET /api/recommendations
+//      If the user has no recommendations yet, shows a prompt to generate one.
+//
+//   2. User clicks "Generate Recommendation" → generateRecommendation()
+//      → POST /api/recommendations/generate
+//      Backend runs: gather data → build prompt → call AI → save → fetch resources
+//      UI shows the returned topic, reason, match score, and resource cards.
+//
+//   3. AI failure is handled gracefully — the user sees a friendly message
+//      instead of a broken page.
+
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
+import { Skeleton } from "../components/ui/Skeleton";
 import {
-  Code,
-  Palette,
-  Layers,
-  Zap,
-  BookOpen,
   Play,
+  FileText,
+  Code,
+  BookOpen,
   Clock,
+  ExternalLink,
   Star,
-  ArrowRight,
-  Filter,
   Sparkles,
   TrendingUp,
   Info,
+  Zap,
+  RefreshCw,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
+import {
+  getRecommendations,
+  generateRecommendation,
+  type Recommendation,
+  type RecommendationResource,
+} from "../../services/recommendationService";
 
-type Category = "all" | "topics" | "practice" | "resources";
-
-interface Recommendation {
-  id: string;
-  title: string;
-  description: string;
-  category: "topics" | "practice" | "resources";
-  icon: React.ElementType;
-  iconBg: string;
-  iconColor: string;
-  duration: string;
-  difficulty: "Beginner" | "Intermediate" | "Advanced";
-  xp: number;
-  matchScore: number;
-  tags: string[];
-}
-
-const recommendations: Recommendation[] = [
-  {
-    id: "2",
-    title: "Build a Todo App",
-    description: "Practice DOM skills by creating a fully functional task management application.",
-    category: "practice",
-    icon: Layers,
-    iconBg: "bg-purple-100",
-    iconColor: "text-purple-600",
-    duration: "60 min",
-    difficulty: "Intermediate",
-    xp: 200,
-    matchScore: 95,
-    tags: ["Project", "JavaScript"],
-  },
-  {
-    id: "3",
-    title: "CSS Grid Deep Dive",
-    description: "Master two-dimensional layouts with Grid template areas and auto-placement.",
-    category: "topics",
-    icon: Palette,
-    iconBg: "bg-green-100",
-    iconColor: "text-green-600",
-    duration: "35 min",
-    difficulty: "Intermediate",
-    xp: 100,
-    matchScore: 92,
-    tags: ["CSS", "Layout"],
-  },
-  {
-    id: "4",
-    title: "JavaScript Design Patterns",
-    description: "Explore common patterns like Module, Observer, and Factory for cleaner code.",
-    category: "resources",
-    icon: BookOpen,
-    iconBg: "bg-orange-100",
-    iconColor: "text-orange-600",
-    duration: "90 min",
-    difficulty: "Advanced",
-    xp: 250,
-    matchScore: 88,
-    tags: ["JavaScript", "Architecture"],
-  },
-  {
-    id: "5",
-    title: "Responsive Image Gallery",
-    description: "Build a masonry-style photo gallery that adapts to any screen size.",
-    category: "practice",
-    icon: Palette,
-    iconBg: "bg-pink-100",
-    iconColor: "text-pink-600",
-    duration: "50 min",
-    difficulty: "Beginner",
-    xp: 150,
-    matchScore: 85,
-    tags: ["CSS", "Project"],
-  },
-  {
-    id: "6",
-    title: "Async/Await & Promises",
-    description: "Understand asynchronous JavaScript patterns for API calls and data fetching.",
-    category: "topics",
-    icon: Zap,
-    iconBg: "bg-yellow-100",
-    iconColor: "text-yellow-600",
-    duration: "40 min",
-    difficulty: "Intermediate",
-    xp: 130,
-    matchScore: 82,
-    tags: ["JavaScript", "Async"],
-  },
-];
-
-const categories: { value: Category; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "topics", label: "Topics" },
-  { value: "practice", label: "Practice" },
-  { value: "resources", label: "Resources" },
-];
+// ─── Type icon mapping ──────────────────────────────────────────────────────
+// Maps resource types to their display icon and colors.
+const typeIcons: Record<
+  string,
+  { icon: React.ElementType; bg: string; color: string }
+> = {
+  video: { icon: Play, bg: "bg-red-100", color: "text-red-600" },
+  article: { icon: FileText, bg: "bg-blue-100", color: "text-blue-600" },
+  project: { icon: Code, bg: "bg-green-100", color: "text-green-600" },
+  tutorial: { icon: BookOpen, bg: "bg-purple-100", color: "text-purple-600" },
+};
 
 const difficultyColors: Record<string, string> = {
   Beginner: "bg-green-100 text-green-700",
@@ -120,16 +58,60 @@ const difficultyColors: Record<string, string> = {
 };
 
 export function RecommendationsPage() {
-  const [activeCategory, setActiveCategory] = useState<Category>("all");
+  const [recommendation, setRecommendation] = useState<Recommendation | null>(
+    null,
+  );
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const filtered =
-    activeCategory === "all"
-      ? recommendations
-      : recommendations.filter((r) => r.category === activeCategory);
+  // ── Load the latest recommendation on mount ────────────────────────
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      setError(null);
+      const res = await getRecommendations();
+      if (res.success) {
+        setRecommendation(res.data);
+      } else {
+        setError(res.message);
+      }
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  // ── Generate a new recommendation ─────────────────────────────────
+  async function handleGenerate() {
+    setGenerating(true);
+    setError(null);
+    const res = await generateRecommendation();
+    if (res.success) {
+      setRecommendation(res.data);
+    } else {
+      setError(res.message);
+    }
+    setGenerating(false);
+  }
+
+  // ── Loading skeleton ──────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <Skeleton className="h-36 rounded-2xl" />
+        <Skeleton className="h-64 rounded-xl" />
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-48 rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
-      {/* AI suggestion banner */}
+      {/* ── AI suggestion banner ────────────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -141,212 +123,337 @@ export function RecommendationsPage() {
             <Sparkles className="w-6 h-6 text-yellow-300" />
           </div>
           <div className="flex-1">
-            <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Personalized for You</h2>
-            <p className="text-purple-200 mt-1" style={{ fontSize: "0.875rem" }}>
-              Based on your progress in CSS Fundamentals, we recommend focusing on DOM Manipulation next.
-              Your match scores reflect how well each topic aligns with your learning goals.
+            <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>
+              Personalized for You
+            </h2>
+            <p
+              className="text-purple-200 mt-1"
+              style={{ fontSize: "0.875rem" }}
+            >
+              {recommendation
+                ? `Based on your learning progress, we recommend focusing on ${recommendation.topic} next. Your match score reflects how well this aligns with your goals.`
+                : "Click below to generate your first AI-powered recommendation based on your learning progress."}
             </p>
           </div>
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
-            className="flex items-center gap-2 bg-white text-purple-700 px-5 py-2.5 rounded-lg shrink-0 cursor-pointer"
+            onClick={handleGenerate}
+            disabled={generating}
+            className="flex items-center gap-2 bg-white text-purple-700 px-5 py-2.5 rounded-lg shrink-0 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             style={{ fontSize: "0.875rem", fontWeight: 600 }}
           >
-            <TrendingUp className="w-4 h-4" /> View Learning Plan
+            {generating ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" /> Generating…
+              </>
+            ) : (
+              <>
+                <TrendingUp className="w-4 h-4" />{" "}
+                {recommendation
+                  ? "Refresh Recommendation"
+                  : "Generate Recommendation"}
+              </>
+            )}
           </motion.button>
         </div>
       </motion.div>
 
-      {/* Next Recommended Topic — large highlighted card */}
-      <div>
-        <h2 className="text-[#0F172A] mb-4" style={{ fontSize: "1.125rem", fontWeight: 600 }}>
-          Next Recommended Topic
-        </h2>
+      {/* ── Error banner ────────────────────────────────────────────── */}
+      {error && (
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.08 }}
-          whileHover={{ y: -3, boxShadow: "0 12px 40px rgba(0,0,0,0.08)" }}
-          className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden"
+          className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl"
         >
-          <div className="flex flex-col md:flex-row">
-            {/* Left accent */}
-            <div className="w-full md:w-2 h-2 md:h-auto bg-blue-600 shrink-0" />
+          <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
+          <p className="text-red-700 flex-1" style={{ fontSize: "0.875rem" }}>
+            {error}
+          </p>
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={handleGenerate}
+            disabled={generating}
+            className="flex items-center gap-1 text-red-600 cursor-pointer"
+            style={{ fontSize: "0.8125rem", fontWeight: 600 }}
+          >
+            <RefreshCw className="w-4 h-4" /> Retry
+          </motion.button>
+        </motion.div>
+      )}
 
-            <div className="flex-1 p-6 md:p-8">
-              <div className="flex flex-col lg:flex-row lg:items-start gap-6">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-                      <Code className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-[#0F172A]" style={{ fontSize: "1.25rem", fontWeight: 700 }}>
-                          DOM Manipulation
-                        </h3>
+      {/* ── Main recommendation card ────────────────────────────────── */}
+      {recommendation ? (
+        <>
+          <div>
+            <h2
+              className="text-[#0F172A] mb-4"
+              style={{ fontSize: "1.125rem", fontWeight: 600 }}
+            >
+              Next Recommended Topic
+            </h2>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.08 }}
+              whileHover={{
+                y: -3,
+                boxShadow: "0 12px 40px rgba(0,0,0,0.08)",
+              }}
+              className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden"
+            >
+              <div className="flex flex-col md:flex-row">
+                {/* Left accent */}
+                <div className="w-full md:w-2 h-2 md:h-auto bg-blue-600 shrink-0" />
+
+                <div className="flex-1 p-6 md:p-8">
+                  <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                          <Code className="w-6 h-6 text-blue-600" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3
+                              className="text-[#0F172A]"
+                              style={{
+                                fontSize: "1.25rem",
+                                fontWeight: 700,
+                              }}
+                            >
+                              {recommendation.topic}
+                            </h3>
+                            <span
+                              className="bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded-full flex items-center gap-1"
+                              style={{
+                                fontSize: "0.6875rem",
+                                fontWeight: 600,
+                              }}
+                            >
+                              <Star className="w-3 h-3" />{" "}
+                              {recommendation.match_score}% match
+                            </span>
+                          </div>
+                          <p
+                            className="text-gray-500 mt-0.5"
+                            style={{ fontSize: "0.875rem" }}
+                          >
+                            {recommendation.reason}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 flex-wrap mt-4">
+                        {recommendation.difficulty && (
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full ${difficultyColors[recommendation.difficulty] || difficultyColors["Intermediate"]}`}
+                            style={{
+                              fontSize: "0.75rem",
+                              fontWeight: 500,
+                            }}
+                          >
+                            {recommendation.difficulty}
+                          </span>
+                        )}
                         <span
-                          className="bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded-full flex items-center gap-1"
-                          style={{ fontSize: "0.6875rem", fontWeight: 600 }}
+                          className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-500"
+                          style={{ fontSize: "0.6875rem" }}
                         >
-                          <Star className="w-3 h-3" /> 98% match
+                          {recommendation.topic}
                         </span>
                       </div>
-                      <p className="text-gray-500 mt-0.5" style={{ fontSize: "0.875rem" }}>
-                        Learn to dynamically create, modify, and remove HTML elements using JavaScript.
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-4 flex-wrap mt-4">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full ${difficultyColors["Intermediate"]}`}
-                      style={{ fontSize: "0.75rem", fontWeight: 500 }}
+                      {/* Why recommended explanation */}
+                      <div className="mt-5 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <Info className="w-4 h-4 text-blue-600" />
+                          <span
+                            className="text-blue-700"
+                            style={{
+                              fontSize: "0.8125rem",
+                              fontWeight: 600,
+                            }}
+                          >
+                            Why this is recommended
+                          </span>
+                        </div>
+                        <p
+                          className="text-blue-600"
+                          style={{
+                            fontSize: "0.8125rem",
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {recommendation.reason}
+                        </p>
+                      </div>
+                    </div>
+
+                    <motion.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl shrink-0 cursor-pointer self-start"
+                      style={{ fontSize: "0.9375rem", fontWeight: 600 }}
                     >
-                      Intermediate
-                    </span>
-                    <span className="flex items-center gap-1 text-gray-400" style={{ fontSize: "0.8125rem" }}>
-                      <Clock className="w-4 h-4" /> 45 min
-                    </span>
-                    <span className="flex items-center gap-1 text-yellow-500" style={{ fontSize: "0.8125rem" }}>
-                      <Zap className="w-4 h-4" /> 120 XP
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-500" style={{ fontSize: "0.6875rem" }}>
-                      JavaScript
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-500" style={{ fontSize: "0.6875rem" }}>
-                      Web API
-                    </span>
-                  </div>
-
-                  {/* Why recommended */}
-                  <div className="mt-5 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <Info className="w-4 h-4 text-blue-600" />
-                      <span className="text-blue-700" style={{ fontSize: "0.8125rem", fontWeight: 600 }}>
-                        Why this is recommended
-                      </span>
-                    </div>
-                    <p className="text-blue-600" style={{ fontSize: "0.8125rem", lineHeight: 1.5 }}>
-                      Because you recently completed CSS Fundamentals and your JavaScript progress is
-                      still low, we recommend learning DOM Manipulation next. This topic bridges your
-                      CSS knowledge with interactive JavaScript skills.
-                    </p>
+                      <Play className="w-5 h-5" /> Start Learning
+                    </motion.button>
                   </div>
                 </div>
-
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl shrink-0 cursor-pointer self-start"
-                  style={{ fontSize: "0.9375rem", fontWeight: 600 }}
-                >
-                  <Play className="w-5 h-5" /> Start Learning
-                </motion.button>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* More Recommendations */}
-      <div>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <h2 className="text-[#0F172A]" style={{ fontSize: "1.125rem", fontWeight: 600 }}>
-            More Recommendations
-          </h2>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Filter className="w-4 h-4 text-gray-400" />
-            {categories.map((cat) => (
-              <motion.button
-                key={cat.value}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => setActiveCategory(cat.value)}
-                className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                  activeCategory === cat.value
-                    ? "bg-[#0F172A] text-white"
-                    : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
-                }`}
-                style={{ fontSize: "0.8125rem", fontWeight: 500 }}
-              >
-                {cat.label}
-              </motion.button>
-            ))}
-          </div>
-        </div>
-
-        {/* Cards grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {filtered.map((rec, i) => (
-            <motion.div
-              key={rec.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: i * 0.06 }}
-              whileHover={{ y: -3, boxShadow: "0 12px 40px rgba(0,0,0,0.08)" }}
-              className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${rec.iconBg}`}>
-                  <rec.icon className={`w-5 h-5 ${rec.iconColor}`} />
-                </div>
-                <div
-                  className="flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded-full"
-                  style={{ fontSize: "0.6875rem", fontWeight: 600 }}
-                >
-                  <Star className="w-3 h-3" />
-                  {rec.matchScore}% match
-                </div>
-              </div>
-
-              <h3 className="text-[#0F172A] mb-1" style={{ fontSize: "1rem", fontWeight: 600 }}>
-                {rec.title}
-              </h3>
-              <p className="text-gray-500 mb-4 flex-1" style={{ fontSize: "0.8125rem", lineHeight: 1.5 }}>
-                {rec.description}
-              </p>
-
-              <div className="flex items-center gap-2 flex-wrap mb-4">
-                <span
-                  className={`px-2 py-0.5 rounded-full ${difficultyColors[rec.difficulty]}`}
-                  style={{ fontSize: "0.6875rem", fontWeight: 500 }}
-                >
-                  {rec.difficulty}
-                </span>
-                {rec.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-500"
-                    style={{ fontSize: "0.6875rem" }}
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-
-              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-1 text-gray-400" style={{ fontSize: "0.75rem" }}>
-                    <Clock className="w-3.5 h-3.5" /> {rec.duration}
-                  </span>
-                  <span className="flex items-center gap-1 text-yellow-500" style={{ fontSize: "0.75rem" }}>
-                    <Zap className="w-3.5 h-3.5" /> {rec.xp} XP
-                  </span>
-                </div>
-                <motion.button
-                  whileHover={{ x: 3 }}
-                  className="flex items-center gap-1 text-blue-600 cursor-pointer"
-                  style={{ fontSize: "0.8125rem", fontWeight: 600 }}
-                >
-                  <Play className="w-3.5 h-3.5" /> Start
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </motion.button>
               </div>
             </motion.div>
-          ))}
-        </div>
-      </div>
+          </div>
+
+          {/* ── Recommended resources grid ──────────────────────────── */}
+          {recommendation.resources.length > 0 && (
+            <div>
+              <h2
+                className="text-[#0F172A] mb-4"
+                style={{ fontSize: "1.125rem", fontWeight: 600 }}
+              >
+                Recommended Resources
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {recommendation.resources.map(
+                  (resource: RecommendationResource, i: number) => {
+                    const typeInfo =
+                      typeIcons[resource.type] || typeIcons.article;
+                    const TypeIcon = typeInfo.icon;
+
+                    return (
+                      <motion.div
+                        key={resource.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: i * 0.06 }}
+                        whileHover={{
+                          y: -3,
+                          boxShadow: "0 12px 40px rgba(0,0,0,0.08)",
+                        }}
+                        className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col"
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div
+                            className={`w-11 h-11 rounded-xl flex items-center justify-center ${typeInfo.bg}`}
+                          >
+                            <TypeIcon className={`w-5 h-5 ${typeInfo.color}`} />
+                          </div>
+                          <span
+                            className={`px-2 py-0.5 rounded-full ${difficultyColors[resource.difficulty] || ""}`}
+                            style={{
+                              fontSize: "0.6875rem",
+                              fontWeight: 500,
+                            }}
+                          >
+                            {resource.difficulty}
+                          </span>
+                        </div>
+
+                        <h3
+                          className="text-[#0F172A] mb-1"
+                          style={{ fontSize: "1rem", fontWeight: 600 }}
+                        >
+                          {resource.title}
+                        </h3>
+                        <p
+                          className="text-gray-500 mb-1"
+                          style={{
+                            fontSize: "0.8125rem",
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {resource.topic}
+                        </p>
+                        <p
+                          className="text-gray-400 mb-4 flex-1"
+                          style={{ fontSize: "0.75rem" }}
+                        >
+                          by {resource.author}
+                        </p>
+
+                        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                          <div className="flex items-center gap-3">
+                            <span
+                              className="flex items-center gap-1 text-gray-400"
+                              style={{ fontSize: "0.75rem" }}
+                            >
+                              <Clock className="w-3.5 h-3.5" />{" "}
+                              {resource.duration}
+                            </span>
+                            <span
+                              className="flex items-center gap-1 text-yellow-500"
+                              style={{ fontSize: "0.75rem" }}
+                            >
+                              <Star className="w-3.5 h-3.5" /> {resource.rating}
+                            </span>
+                          </div>
+                          <a
+                            href={resource.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-blue-600 hover:text-blue-700"
+                            style={{
+                              fontSize: "0.8125rem",
+                              fontWeight: 600,
+                            }}
+                          >
+                            Open <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        </div>
+                      </motion.div>
+                    );
+                  },
+                )}
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        /* ── Empty state — no recommendation yet ───────────────────── */
+        !error && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center py-16 text-center"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center mb-4">
+              <Sparkles className="w-8 h-8 text-purple-600" />
+            </div>
+            <h3
+              className="text-[#0F172A] mb-2"
+              style={{ fontSize: "1.125rem", fontWeight: 600 }}
+            >
+              No Recommendations Yet
+            </h3>
+            <p
+              className="text-gray-500 max-w-md mb-6"
+              style={{ fontSize: "0.875rem" }}
+            >
+              Click the button above to generate your first personalized
+              recommendation powered by AI. We&#39;ll analyze your progress and
+              suggest the best next topic for you.
+            </p>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleGenerate}
+              disabled={generating}
+              className="flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-xl cursor-pointer disabled:opacity-60"
+              style={{ fontSize: "0.9375rem", fontWeight: 600 }}
+            >
+              {generating ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" /> Generating…
+                </>
+              ) : (
+                <>
+                  <Zap className="w-5 h-5" /> Generate Recommendation
+                </>
+              )}
+            </motion.button>
+          </motion.div>
+        )
+      )}
     </div>
   );
 }

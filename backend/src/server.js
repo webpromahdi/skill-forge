@@ -5,6 +5,8 @@ import supabase from "./database/supabaseClient.js";
 import authRoutes from "./routes/authRoutes.js";
 import progressRoutes from "./routes/progressRoutes.js";
 import quizRoutes from "./routes/quizRoutes.js";
+import resourceRoutes from "./routes/resourceRoutes.js";
+import recommendationRoutes from "./routes/recommendationRoutes.js";
 
 // ─── Load Environment Variables ─────────────────────────────────────────────
 dotenv.config();
@@ -29,6 +31,8 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/quizzes", quizRoutes);
+app.use("/api/resources", resourceRoutes);
+app.use("/api/recommendations", recommendationRoutes);
 
 // ─── Database Test Endpoint ─────────────────────────────────────────────────
 app.get("/api/test-db", async (req, res) => {

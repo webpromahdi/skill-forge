@@ -1,0 +1,173 @@
+Continue improving the frontend UI based on the current project structure and completed features.
+
+Do NOT add backend logic or authentication yet. Focus only on frontend UI, UX, and interactive components using the existing architecture.
+
+Use the existing stack and design system:
+React + Tailwind CSS + Framer Motion.
+
+Reuse existing components whenever possible and maintain the current folder structure and UI style.
+
+--------------------------------------------------
+
+1. Improve the Recommendations Page
+
+Enhance the recommendations page so it better represents a personalized learning recommendation system.
+
+Add a new section at the top called:
+
+"Next Recommended Topic"
+
+This should be a large highlighted card showing the highest priority recommendation.
+
+The card should include:
+- Topic title
+- Short description
+- Estimated learning time
+- XP reward
+- Difficulty badge
+- Start button
+
+Also include a small explanation section:
+
+"Why this is recommended"
+
+Example:
+Because you recently completed CSS Fundamentals and your JavaScript progress is still low, we recommend learning DOM Manipulation next.
+
+Below this section, keep the existing recommendations grid but treat it as:
+
+"More Recommendations"
+
+Keep the filter tabs:
+All / Topics / Practice / Resources
+
+Do not remove the current recommendation cards — only restructure the page hierarchy.
+
+--------------------------------------------------
+
+2. Assessments Page
+
+Replace the placeholder with a complete quiz interface.
+
+Include:
+
+Quiz List Section
+- Quiz cards showing title
+- difficulty
+- estimated time
+- XP reward
+- Start Quiz button
+
+Quiz Interface Layout
+- Question card
+- Multiple choice answers
+- Progress indicator
+- Next / Previous buttons
+
+Quiz Result Summary
+- Score
+- Correct answers
+- XP reward
+- Retry button
+
+--------------------------------------------------
+
+3. Resources Page
+
+Create a learning resource library.
+
+Include:
+
+Search bar
+
+Category filters:
+Videos
+Articles
+Projects
+Tutorials
+
+Resource cards showing:
+- title
+- resource type
+- difficulty
+- tags
+- duration
+- open button
+
+Use a responsive grid similar to the recommendations layout.
+
+--------------------------------------------------
+
+4. Settings Page
+
+Create a user settings interface with three sections.
+
+Profile
+- Name
+- Email
+- Avatar placeholder
+
+Learning Preferences
+- Learning goal
+- Daily learning time
+
+Notifications
+- Toggle switches for reminder notifications
+
+Use clean form layouts and reusable input components.
+
+--------------------------------------------------
+
+5. Notification Panel
+
+The header notification bell currently shows a red dot but no panel.
+
+Add a dropdown notification panel.
+
+Include:
+- list of recent notifications
+- icon for each notification type
+- timestamp
+- scrollable container
+
+Example notifications:
+Lesson completed
+New recommendation available
+Upcoming quiz reminder
+
+--------------------------------------------------
+
+6. Kanban View for Weekly Activity
+
+The list/kanban toggle currently only shows list view.
+
+Implement a real Kanban layout with three columns:
+
+Not Started
+In Progress
+Completed
+
+Activity cards should appear in the appropriate column.
+
+Drag-and-drop is optional for now, but the layout should visually resemble a Kanban board.
+
+--------------------------------------------------
+
+7. Skeleton Loading States
+
+Add skeleton loading components to prepare the UI for future API integration.
+
+Create skeleton loaders for:
+
+Dashboard stat cards
+Recommendation cards
+Learning progress list
+Charts on the progress page
+
+Use animated skeleton placeholders styled with Tailwind.
+
+--------------------------------------------------
+
+Ensure the UI remains fully responsive and consistent with the existing design system.
+Do not change the current color palette or typography.
+Maintain clean component architecture and reuse existing UI components wherever possible.

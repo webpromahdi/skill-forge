@@ -1,0 +1,8 @@
+// ─── Utilities ──────────────────────────────────────────────────────────────
+// This directory contains shared helper functions and utility modules.
+//
+// Example:
+//   apiResponse.js   → Standardized API response formatter
+//   logger.js        → Custom logging utility
+//   validators.js    → Common validation helpers
+//   constants.js     → Application-wide constants

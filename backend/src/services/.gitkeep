@@ -1,0 +1,8 @@
+// ─── Services ───────────────────────────────────────────────────────────────
+// This directory contains business logic and external service integrations.
+// Services encapsulate logic that can be reused across controllers.
+//
+// Example:
+//   aiService.js       → OpenAI / LLM integration
+//   emailService.js    → Transactional email sending
+//   paymentService.js  → Stripe / payment processing

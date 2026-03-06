@@ -1,0 +1,8 @@
+// ─── Routes ─────────────────────────────────────────────────────────────────
+// This directory contains Express Router definitions.
+// Each route file maps HTTP methods + paths to controller functions.
+//
+// Example:
+//   authRoutes.js   → /api/auth/*
+//   courseRoutes.js  → /api/courses/*
+//   userRoutes.js   → /api/users/*

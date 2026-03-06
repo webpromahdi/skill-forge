@@ -1,0 +1,9 @@
+// ─── Database ───────────────────────────────────────────────────────────────
+// This directory contains database configuration, connection logic,
+// models, and migration files.
+//
+// Example:
+//   connection.js  → Database connection setup
+//   models/        → Data models / schemas
+//   migrations/    → Database migration scripts
+//   seeds/         → Seed data for development

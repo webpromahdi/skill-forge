@@ -1,0 +1,8 @@
+// ─── Middleware ──────────────────────────────────────────────────────────────
+// This directory contains custom Express middleware functions.
+//
+// Example:
+//   authMiddleware.js     → JWT verification, role-based access
+//   errorMiddleware.js    → Centralized error handling
+//   rateLimiter.js        → Request rate limiting
+//   validateRequest.js    → Request body/param validation

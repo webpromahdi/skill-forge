@@ -1,0 +1,9 @@
+// ─── Controllers ────────────────────────────────────────────────────────────
+// This directory contains route handler functions (controllers).
+// Each controller file should handle the business logic for a specific
+// resource or feature of the SkillForge API.
+//
+// Example:
+//   authController.js   → login, register, verifyToken
+//   courseController.js  → getCourses, createCourse, updateCourse
+//   userController.js    → getProfile, updateProfile

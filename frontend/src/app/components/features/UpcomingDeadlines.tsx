@@ -2,6 +2,8 @@ import { motion } from "motion/react";
 import { DashboardCard } from "../ui/DashboardCard";
 import { Calendar, AlertCircle } from "lucide-react";
 
+// TODO: Replace with a backend deadlines endpoint (e.g. GET /api/deadlines)
+// when available.  Currently static placeholder data.
 const deadlines = [
   {
     title: "JavaScript Quiz",
@@ -26,7 +28,10 @@ const deadlines = [
 export function UpcomingDeadlines() {
   return (
     <DashboardCard delay={0.25}>
-      <h3 className="text-[#0F172A] mb-4" style={{ fontSize: "1.125rem", fontWeight: 600 }}>
+      <h3
+        className="text-[#0F172A] mb-4"
+        style={{ fontSize: "1.125rem", fontWeight: 600 }}
+      >
         Upcoming Deadlines
       </h3>
       <div className="space-y-3">
@@ -37,7 +42,9 @@ export function UpcomingDeadlines() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3, delay: 0.3 + i * 0.08 }}
             className={`flex items-center gap-3 p-3 rounded-lg border ${
-              item.urgent ? "border-red-200 bg-red-50/50" : "border-gray-100 bg-gray-50/50"
+              item.urgent
+                ? "border-red-200 bg-red-50/50"
+                : "border-gray-100 bg-gray-50/50"
             }`}
           >
             <div
@@ -52,7 +59,10 @@ export function UpcomingDeadlines() {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[#0F172A] truncate" style={{ fontSize: "0.8125rem", fontWeight: 600 }}>
+              <p
+                className="text-[#0F172A] truncate"
+                style={{ fontSize: "0.8125rem", fontWeight: 600 }}
+              >
                 {item.title}
               </p>
               <p className="text-gray-400" style={{ fontSize: "0.6875rem" }}>
@@ -61,7 +71,9 @@ export function UpcomingDeadlines() {
             </div>
             <span
               className={`shrink-0 px-2 py-0.5 rounded-full ${
-                item.urgent ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-500"
+                item.urgent
+                  ? "bg-red-100 text-red-600"
+                  : "bg-gray-100 text-gray-500"
               }`}
               style={{ fontSize: "0.6875rem", fontWeight: 600 }}
             >

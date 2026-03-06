@@ -17,6 +17,8 @@ interface Notification {
   read: boolean;
 }
 
+// TODO: Replace with a backend notifications endpoint (e.g. GET /api/notifications)
+// when available.  Currently static placeholder data.
 const notifications: Notification[] = [
   {
     id: "1",
@@ -113,7 +115,10 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
-                <h3 className="text-[#0F172A]" style={{ fontSize: "0.9375rem", fontWeight: 600 }}>
+                <h3
+                  className="text-[#0F172A]"
+                  style={{ fontSize: "0.9375rem", fontWeight: 600 }}
+                >
                   Notifications
                 </h3>
                 {unreadCount > 0 && (
@@ -158,7 +163,10 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                       <div className="flex items-center gap-2">
                         <p
                           className="text-[#0F172A] truncate"
-                          style={{ fontSize: "0.8125rem", fontWeight: notification.read ? 400 : 600 }}
+                          style={{
+                            fontSize: "0.8125rem",
+                            fontWeight: notification.read ? 400 : 600,
+                          }}
                         >
                           {notification.title}
                         </p>
@@ -166,10 +174,16 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                           <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
                         )}
                       </div>
-                      <p className="text-gray-500 truncate" style={{ fontSize: "0.75rem" }}>
+                      <p
+                        className="text-gray-500 truncate"
+                        style={{ fontSize: "0.75rem" }}
+                      >
                         {notification.message}
                       </p>
-                      <p className="text-gray-400 mt-0.5" style={{ fontSize: "0.6875rem" }}>
+                      <p
+                        className="text-gray-400 mt-0.5"
+                        style={{ fontSize: "0.6875rem" }}
+                      >
                         {notification.time}
                       </p>
                     </div>

@@ -35,6 +35,16 @@ export function SettingsPage() {
       });
     }
   }, [user]);
+
+  // ── Build initials from the user's name (dynamic) ──
+  const displayName = profile.name || user?.email || "User";
+  const initials = displayName
+    .split(" ")
+    .map((w: string) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
   const [preferences, setPreferences] = useState({
     goal: "Frontend Developer",
     dailyTime: "1 hour",
@@ -89,7 +99,8 @@ export function SettingsPage() {
               className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-white"
               style={{ fontSize: "1.5rem", fontWeight: 700 }}
             >
-              JC
+              {/* Dynamic initials from authenticated user */}
+              {initials}
             </div>
             <button
               className="absolute bottom-0 right-0 w-7 h-7 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 cursor-pointer"

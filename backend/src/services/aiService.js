@@ -9,8 +9,8 @@
 //   5. Recommendation is saved to the database
 //
 // Supported backends (selected via AI_PROVIDER env var):
-//   • "glm"    — ZhipuAI GLM API (default)
-//   • "ollama" — local Ollama instance
+//   • "ollama" — Ollama Cloud API or local Ollama instance (default)
+//   • "glm"    — ZhipuAI GLM API (legacy)
 //
 // If the AI call fails, the service throws so the controller can handle
 // the error gracefully and return a fallback response.
@@ -23,13 +23,13 @@
 // @returns {Object} Parsed recommendation JSON from the AI model
 // @throws {Error}  If the AI call fails or the response is not valid JSON
 export async function getAIRecommendation(prompt) {
-  const provider = (process.env.AI_PROVIDER || "glm").toLowerCase();
+  const provider = (process.env.AI_PROVIDER || "ollama").toLowerCase();
 
-  if (provider === "ollama") {
-    return callOllama(prompt);
+  if (provider === "glm") {
+    return callGLM(prompt);
   }
 
-  return callGLM(prompt);
+  return callOllama(prompt);
 }
 
 // ─── GLM (ZhipuAI) ─────────────────────────────────────────────────────────
@@ -83,19 +83,43 @@ async function callGLM(prompt) {
   return parseAIResponse(content);
 }
 
-// ─── Ollama (local) ─────────────────────────────────────────────────────────
-// Calls a locally-running Ollama instance. Defaults to the "llama3" model.
-// Requires Ollama running on OLLAMA_URL (default: http://localhost:11434).
+// ─── Ollama (Cloud or Local) ────────────────────────────────────────────────
+// Calls the Ollama API using the /api/chat endpoint.
+//
+// Cloud mode (default for this project):
+//   OLLAMA_URL=https://ollama.com
+//   OLLAMA_API_KEY=<your key from ollama.com/settings/keys>
+//   OLLAMA_MODEL=glm-5:cloud
+//
+// Local mode:
+//   OLLAMA_URL=http://localhost:11434  (or omit — it's the default)
+//   OLLAMA_MODEL=llama3
+//   No API key needed for local.
 async function callOllama(prompt) {
   const baseUrl = process.env.OLLAMA_URL || "http://localhost:11434";
-  const model = process.env.OLLAMA_MODEL || "llama3";
+  const model = process.env.OLLAMA_MODEL || "glm-5:cloud";
+  const apiKey = process.env.OLLAMA_API_KEY;
 
-  const response = await fetch(`${baseUrl}/api/generate`, {
+  // Build headers — include Bearer token when an API key is configured
+  // (required for Ollama Cloud at https://ollama.com)
+  const headers = { "Content-Type": "application/json" };
+  if (apiKey) {
+    headers["Authorization"] = `Bearer ${apiKey}`;
+  }
+
+  const response = await fetch(`${baseUrl}/api/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({
       model,
-      prompt,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a helpful AI learning assistant. Always respond with valid JSON only.",
+        },
+        { role: "user", content: prompt },
+      ],
       stream: false,
       options: { temperature: 0.7 },
     }),
@@ -103,11 +127,11 @@ async function callOllama(prompt) {
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`Ollama error (${response.status}): ${text}`);
+    throw new Error(`Ollama API error (${response.status}): ${text}`);
   }
 
   const data = await response.json();
-  const content = data.response;
+  const content = data.message?.content;
 
   if (!content) {
     throw new Error("Ollama returned an empty response");

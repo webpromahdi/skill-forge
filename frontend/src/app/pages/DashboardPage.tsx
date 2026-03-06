@@ -24,6 +24,9 @@ import {
   type ProgressTopic,
 } from "../../services/progressService";
 
+// TODO: Replace with a backend weekly-activity endpoint
+// (e.g. GET /api/progress/weekly) when available.
+// Currently static placeholder data.
 const weeklyActivities = [
   {
     day: "Monday",

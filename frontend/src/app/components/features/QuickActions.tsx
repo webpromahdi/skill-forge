@@ -1,6 +1,9 @@
 import { motion } from "motion/react";
 import { Play, FileText, Target, MessageSquare } from "lucide-react";
 
+// TODO: Replace action descriptions with data from a backend endpoint
+// (e.g. GET /api/progress/current-activity) when available.
+// Currently static navigation shortcuts.
 const actions = [
   {
     icon: Play,
@@ -35,7 +38,10 @@ export function QuickActions() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.15 }}
     >
-      <h3 className="text-[#0F172A] mb-4" style={{ fontSize: "1rem", fontWeight: 600 }}>
+      <h3
+        className="text-[#0F172A] mb-4"
+        style={{ fontSize: "1rem", fontWeight: 600 }}
+      >
         Quick Actions
       </h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -50,7 +56,9 @@ export function QuickActions() {
             className={`flex flex-col items-center gap-2 p-4 rounded-xl text-white transition-colors cursor-pointer ${action.color}`}
           >
             <action.icon className="w-5 h-5" />
-            <span style={{ fontSize: "0.8125rem", fontWeight: 600 }}>{action.label}</span>
+            <span style={{ fontSize: "0.8125rem", fontWeight: 600 }}>
+              {action.label}
+            </span>
             <span className="text-white/70" style={{ fontSize: "0.6875rem" }}>
               {action.description}
             </span>

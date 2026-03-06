@@ -9,11 +9,13 @@
 //   GET /api/resources?topic=javascript
 
 import { Router } from "express";
+import authMiddleware from "../middleware/authMiddleware.js";
 import { getResources } from "../controllers/resourceController.js";
 
 const router = Router();
 
 // GET /api/resources — fetch all resources (with optional filters)
-router.get("/", getResources);
+// Protected by authMiddleware — the user must send a valid JWT.
+router.get("/", authMiddleware, getResources);
 
 export default router;

@@ -19,7 +19,14 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ─── Global Middleware ──────────────────────────────────────────────────────
-app.use(cors());
+// CORS: only allow requests from known frontend origins.
+// ⚠️  Update the origin list when deploying to production (add your domain).
+app.use(
+  cors({
+    origin: ["http://localhost:5173"],
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

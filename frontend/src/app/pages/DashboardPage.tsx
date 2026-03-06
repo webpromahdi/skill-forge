@@ -20,65 +20,11 @@ import {
 } from "lucide-react";
 import {
   getProgress,
+  getWeeklyActivities,
   type ProgressStats,
   type ProgressTopic,
+  type WeeklyActivity,
 } from "../../services/progressService";
-
-// TODO: Replace with a backend weekly-activity endpoint
-// (e.g. GET /api/progress/weekly) when available.
-// Currently static placeholder data.
-const weeklyActivities = [
-  {
-    day: "Monday",
-    lessonName: "Lesson-1",
-    status: "completed" as const,
-    readingActivities: 2,
-    mathActivities: 2,
-    totalTime: "45 Min",
-    completed: 4,
-    total: 4,
-  },
-  {
-    day: "Tuesday",
-    lessonName: "Lesson-2",
-    status: "in-progress" as const,
-    readingActivities: 3,
-    mathActivities: 1,
-    totalTime: "30 Min",
-    completed: 1,
-    total: 4,
-  },
-  {
-    day: "Wednesday",
-    lessonName: "Lesson-3",
-    status: "not-started" as const,
-    readingActivities: 4,
-    mathActivities: 1,
-    totalTime: "60 Min",
-    completed: 0,
-    total: 4,
-  },
-  {
-    day: "Thursday",
-    lessonName: "Lesson-4",
-    status: "completed" as const,
-    readingActivities: 2,
-    mathActivities: 2,
-    totalTime: "45 Min",
-    completed: 4,
-    total: 4,
-  },
-  {
-    day: "Friday",
-    lessonName: "Lesson-5",
-    status: "in-progress" as const,
-    readingActivities: 3,
-    mathActivities: 2,
-    totalTime: "50 Min",
-    completed: 2,
-    total: 5,
-  },
-];
 
 export function DashboardPage() {
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
@@ -87,20 +33,42 @@ export function DashboardPage() {
   const [progressLoading, setProgressLoading] = useState(true);
   const [progressError, setProgressError] = useState<string | null>(null);
 
+  // ── Weekly activity state from GET /api/progress/weekly ──
+  const [weeklyActivities, setWeeklyActivities] = useState<WeeklyActivity[]>(
+    [],
+  );
+  const [weeklyLoading, setWeeklyLoading] = useState(true);
+  const [weeklyError, setWeeklyError] = useState<string | null>(null);
+
   useEffect(() => {
-    async function fetchProgress() {
+    // Fetch progress stats and weekly activities in parallel
+    async function fetchAll() {
       setProgressLoading(true);
-      const res = await getProgress();
-      if (res.success) {
-        setStats(res.data.stats);
-        setTopics(res.data.topics);
+      setWeeklyLoading(true);
+
+      const [progressRes, weeklyRes] = await Promise.all([
+        getProgress(),
+        getWeeklyActivities(),
+      ]);
+
+      if (progressRes.success) {
+        setStats(progressRes.data.stats);
+        setTopics(progressRes.data.topics);
         setProgressError(null);
       } else {
-        setProgressError(res.message);
+        setProgressError(progressRes.message);
       }
       setProgressLoading(false);
+
+      if (weeklyRes.success) {
+        setWeeklyActivities(weeklyRes.data);
+        setWeeklyError(null);
+      } else {
+        setWeeklyError(weeklyRes.message);
+      }
+      setWeeklyLoading(false);
     }
-    fetchProgress();
+    fetchAll();
   }, []);
 
   return (
@@ -234,10 +202,68 @@ export function DashboardPage() {
         </div>
 
         {viewMode === "list" ? (
-          <div className="space-y-4">
-            {weeklyActivities.map((activity, i) => (
-              <ActivityCard key={activity.day} {...activity} delay={i * 0.08} />
+          weeklyLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 md:p-6 animate-pulse"
+                >
+                  <div className="flex gap-4">
+                    <div className="hidden sm:block w-20 h-20 rounded-xl bg-gray-200" />
+                    <div className="flex-1 space-y-3">
+                      <div className="h-5 bg-gray-200 rounded w-1/3" />
+                      <div className="h-4 bg-gray-100 rounded w-1/4" />
+                      <div className="flex gap-6">
+                        <div className="h-8 bg-gray-100 rounded w-16" />
+                        <div className="h-8 bg-gray-100 rounded w-16" />
+                        <div className="h-8 bg-gray-100 rounded w-16" />
+                      </div>
+                      <div className="h-2 bg-gray-200 rounded w-full" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : weeklyError ? (
+            <div className="text-center py-8 text-red-500">
+              <p>{weeklyError}</p>
+            </div>
+          ) : weeklyActivities.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              <p>
+                No weekly activities yet. Start learning to see your progress
+                here!
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {weeklyActivities.map((activity, i) => (
+                <ActivityCard
+                  key={activity.day}
+                  {...activity}
+                  delay={i * 0.08}
+                />
+              ))}
+            </div>
+          )
+        ) : weeklyLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="rounded-xl bg-gray-50/80 border-t-2 border-t-gray-300 p-4 animate-pulse"
+              >
+                <div className="h-5 bg-gray-200 rounded w-24 mb-4" />
+                <div className="space-y-3 min-h-[120px]">
+                  <div className="h-28 bg-gray-200 rounded-lg" />
+                </div>
+              </div>
             ))}
+          </div>
+        ) : weeklyError ? (
+          <div className="text-center py-8 text-red-500">
+            <p>{weeklyError}</p>
           </div>
         ) : (
           <KanbanBoard activities={weeklyActivities} />

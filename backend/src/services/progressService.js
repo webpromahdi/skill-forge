@@ -226,6 +226,34 @@ export async function getChartData(userId) {
   return { weeklyData, monthlyData, activityTypeData };
 }
 
+// ─── getWeeklyActivities ────────────────────────────────────────────────────
+// Fetches the weekly_activities rows for a given user.
+// The weekly_activities table stores per-day activity snapshots (lesson name,
+// reading / math counts, total time, completion counts, and status).
+// Results are ordered by created_at so the dashboard displays them in
+// chronological order.
+export async function getWeeklyActivities(userId) {
+  const { data, error } = await supabase
+    .from("weekly_activities")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+
+  // Map snake_case DB columns to camelCase for the frontend
+  return (data || []).map((row) => ({
+    day: row.day,
+    lessonName: row.lesson_name,
+    status: row.status,
+    readingActivities: row.reading_activities,
+    mathActivities: row.math_activities,
+    totalTime: `${row.total_time} Min`,
+    completed: row.completed,
+    total: row.total,
+  }));
+}
+
 // ─── calculateStreak ────────────────────────────────────────────────────────
 // Simple streak calculator: counts consecutive days (backward from today)
 // that have at least one progress update.

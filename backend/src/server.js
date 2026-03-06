@@ -8,6 +8,8 @@ import quizRoutes from "./routes/quizRoutes.js";
 import resourceRoutes from "./routes/resourceRoutes.js";
 import recommendationRoutes from "./routes/recommendationRoutes.js";
 import learningPathRoutes from "./routes/learningPathRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
+import deadlineRoutes from "./routes/deadlineRoutes.js";
 
 // ─── Load Environment Variables ─────────────────────────────────────────────
 dotenv.config();
@@ -35,6 +37,8 @@ app.use("/api/quizzes", quizRoutes);
 app.use("/api/resources", resourceRoutes);
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/learning-path", learningPathRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/deadlines", deadlineRoutes);
 
 // ─── Database Test Endpoint ─────────────────────────────────────────────────
 app.get("/api/test-db", async (req, res) => {

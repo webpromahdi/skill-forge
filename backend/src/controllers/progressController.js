@@ -2,6 +2,7 @@ import {
   getUserProgress,
   upsertProgress,
   getChartData,
+  getWeeklyActivities,
 } from "../services/progressService.js";
 
 // ─── Progress Controller ────────────────────────────────────────────────────
@@ -86,6 +87,30 @@ export const getCharts = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch chart data",
+    });
+  }
+};
+
+// ─── getWeekly ──────────────────────────────────────────────────────────────
+// GET /api/progress/weekly
+//
+// Returns the authenticated user's weekly activity rows from the
+// weekly_activities table.  Each row represents one day's planned and
+// completed activities (reading, math, total time, completion count).
+export const getWeekly = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const data = await getWeeklyActivities(userId);
+
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (err) {
+    console.error("[GET WEEKLY ACTIVITIES ERROR]", err.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch weekly activities",
     });
   }
 };

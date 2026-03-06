@@ -4,6 +4,7 @@ import {
   getProgress,
   updateProgress,
   getCharts,
+  getWeekly,
 } from "../controllers/progressController.js";
 
 const router = Router();
@@ -12,12 +13,14 @@ const router = Router();
 // All routes are protected by authMiddleware — the user must send a valid
 // JWT in the Authorization header.
 //
-// GET  /api/progress        → fetch aggregated stats + per-topic progress
-// GET  /api/progress/charts → fetch chart datasets (weekly, monthly, activity)
-// POST /api/progress/update → create or update a single topic's progress
+// GET  /api/progress         → fetch aggregated stats + per-topic progress
+// GET  /api/progress/charts  → fetch chart datasets (weekly, monthly, activity)
+// GET  /api/progress/weekly  → fetch weekly activity rows for the dashboard
+// POST /api/progress/update  → create or update a single topic's progress
 
 router.get("/", authMiddleware, getProgress);
 router.get("/charts", authMiddleware, getCharts);
+router.get("/weekly", authMiddleware, getWeekly);
 router.post("/update", authMiddleware, updateProgress);
 
 export default router;

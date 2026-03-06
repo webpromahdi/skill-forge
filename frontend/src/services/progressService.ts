@@ -116,3 +116,39 @@ export async function getChartData(): Promise<ChartResponse> {
     return { success: false, message: "Network error — please try again" };
   }
 }
+
+// ─── Weekly activity types ──────────────────────────────────────────────────
+
+export interface WeeklyActivity {
+  day: string;
+  lessonName: string;
+  status: "completed" | "in-progress" | "not-started";
+  readingActivities: number;
+  mathActivities: number;
+  totalTime: string;
+  completed: number;
+  total: number;
+}
+
+interface WeeklySuccess {
+  success: true;
+  data: WeeklyActivity[];
+}
+
+interface WeeklyError {
+  success: false;
+  message: string;
+}
+
+type WeeklyResponse = WeeklySuccess | WeeklyError;
+
+// ─── getWeeklyActivities ────────────────────────────────────────────────────
+// Calls GET /progress/weekly.  Returns the user's weekly activity rows
+// for the dashboard activity cards and kanban board.
+export async function getWeeklyActivities(): Promise<WeeklyResponse> {
+  try {
+    return await apiFetch<WeeklyResponse>("/progress/weekly");
+  } catch {
+    return { success: false, message: "Network error — please try again" };
+  }
+}

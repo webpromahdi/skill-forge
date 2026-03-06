@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { DashboardCard } from "../components/ui/DashboardCard";
 import {
@@ -12,12 +12,29 @@ import {
   Save,
   Camera,
 } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
 
 export function SettingsPage() {
+  // ── Load the authenticated user from AuthContext ──
+  // The form's initial values come from the logged-in user instead of
+  // being hardcoded.  An effect keeps them in sync if the user object
+  // loads asynchronously (e.g. after a page refresh).
+  const { user } = useAuth();
+
   const [profile, setProfile] = useState({
-    name: "Jane Cooper",
-    email: "jane.cooper@example.com",
+    name: user?.user_metadata?.name || "",
+    email: user?.email || "",
   });
+
+  // ── Sync form state when the user object arrives or changes ──
+  useEffect(() => {
+    if (user) {
+      setProfile({
+        name: user.user_metadata?.name || "",
+        email: user.email || "",
+      });
+    }
+  }, [user]);
   const [preferences, setPreferences] = useState({
     goal: "Frontend Developer",
     dailyTime: "1 hour",
@@ -43,7 +60,13 @@ export function SettingsPage() {
     "Mobile Developer",
     "Data Science",
   ];
-  const timeOptions = ["30 minutes", "1 hour", "1.5 hours", "2 hours", "3 hours"];
+  const timeOptions = [
+    "30 minutes",
+    "1 hour",
+    "1.5 hours",
+    "2 hours",
+    "3 hours",
+  ];
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
@@ -51,7 +74,10 @@ export function SettingsPage() {
       <DashboardCard delay={0}>
         <div className="flex items-center gap-2 mb-6">
           <User className="w-5 h-5 text-gray-500" />
-          <h3 className="text-[#0F172A]" style={{ fontSize: "1.125rem", fontWeight: 600 }}>
+          <h3
+            className="text-[#0F172A]"
+            style={{ fontSize: "1.125rem", fontWeight: 600 }}
+          >
             Profile
           </h3>
         </div>
@@ -87,7 +113,9 @@ export function SettingsPage() {
                 id="settings-name"
                 type="text"
                 value={profile.name}
-                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                onChange={(e) =>
+                  setProfile({ ...profile, name: e.target.value })
+                }
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                 style={{ fontSize: "0.875rem" }}
               />
@@ -104,7 +132,9 @@ export function SettingsPage() {
                 id="settings-email"
                 type="email"
                 value={profile.email}
-                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                onChange={(e) =>
+                  setProfile({ ...profile, email: e.target.value })
+                }
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                 style={{ fontSize: "0.875rem" }}
               />
@@ -117,7 +147,10 @@ export function SettingsPage() {
       <DashboardCard delay={0.1}>
         <div className="flex items-center gap-2 mb-6">
           <Target className="w-5 h-5 text-gray-500" />
-          <h3 className="text-[#0F172A]" style={{ fontSize: "1.125rem", fontWeight: 600 }}>
+          <h3
+            className="text-[#0F172A]"
+            style={{ fontSize: "1.125rem", fontWeight: 600 }}
+          >
             Learning Preferences
           </h3>
         </div>
@@ -134,7 +167,9 @@ export function SettingsPage() {
             <select
               id="settings-goal"
               value={preferences.goal}
-              onChange={(e) => setPreferences({ ...preferences, goal: e.target.value })}
+              onChange={(e) =>
+                setPreferences({ ...preferences, goal: e.target.value })
+              }
               className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all appearance-none cursor-pointer"
               style={{ fontSize: "0.875rem" }}
             >
@@ -151,12 +186,15 @@ export function SettingsPage() {
               className="flex items-center gap-1.5 text-[#0F172A] mb-1.5"
               style={{ fontSize: "0.8125rem", fontWeight: 500 }}
             >
-              <Clock className="w-3.5 h-3.5 text-gray-400" /> Daily Learning Time
+              <Clock className="w-3.5 h-3.5 text-gray-400" /> Daily Learning
+              Time
             </label>
             <select
               id="settings-time"
               value={preferences.dailyTime}
-              onChange={(e) => setPreferences({ ...preferences, dailyTime: e.target.value })}
+              onChange={(e) =>
+                setPreferences({ ...preferences, dailyTime: e.target.value })
+              }
               className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all appearance-none cursor-pointer"
               style={{ fontSize: "0.875rem" }}
             >
@@ -174,7 +212,10 @@ export function SettingsPage() {
       <DashboardCard delay={0.2}>
         <div className="flex items-center gap-2 mb-6">
           <Bell className="w-5 h-5 text-gray-500" />
-          <h3 className="text-[#0F172A]" style={{ fontSize: "1.125rem", fontWeight: 600 }}>
+          <h3
+            className="text-[#0F172A]"
+            style={{ fontSize: "1.125rem", fontWeight: 600 }}
+          >
             Notifications
           </h3>
         </div>
@@ -221,7 +262,10 @@ export function SettingsPage() {
                   <item.icon className="w-4 h-4 text-gray-500" />
                 </div>
                 <div>
-                  <p className="text-[#0F172A]" style={{ fontSize: "0.875rem", fontWeight: 500 }}>
+                  <p
+                    className="text-[#0F172A]"
+                    style={{ fontSize: "0.875rem", fontWeight: 500 }}
+                  >
                     {item.label}
                   </p>
                   <p className="text-gray-400" style={{ fontSize: "0.75rem" }}>
@@ -231,7 +275,10 @@ export function SettingsPage() {
               </div>
               <button
                 onClick={() =>
-                  setNotifications({ ...notifications, [item.key]: !notifications[item.key] })
+                  setNotifications({
+                    ...notifications,
+                    [item.key]: !notifications[item.key],
+                  })
                 }
                 className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer shrink-0 ${
                   notifications[item.key] ? "bg-blue-600" : "bg-gray-300"
@@ -242,7 +289,9 @@ export function SettingsPage() {
               >
                 <motion.div
                   className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm"
-                  animate={{ left: notifications[item.key] ? "calc(100% - 22px)" : "2px" }}
+                  animate={{
+                    left: notifications[item.key] ? "calc(100% - 22px)" : "2px",
+                  }}
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
                 />
               </button>

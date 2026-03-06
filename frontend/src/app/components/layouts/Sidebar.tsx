@@ -12,6 +12,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router";
+import { useAuth } from "../../../contexts/AuthContext";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -21,9 +22,17 @@ interface SidebarProps {
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: Route, label: "Learning Path", path: "/dashboard/learning-path" },
-  { icon: Lightbulb, label: "Recommendations", path: "/dashboard/recommendations" },
+  {
+    icon: Lightbulb,
+    label: "Recommendations",
+    path: "/dashboard/recommendations",
+  },
   { icon: TrendingUp, label: "Progress", path: "/dashboard/progress" },
-  { icon: ClipboardCheck, label: "Assessments", path: "/dashboard/assessments" },
+  {
+    icon: ClipboardCheck,
+    label: "Assessments",
+    path: "/dashboard/assessments",
+  },
   { icon: BookOpen, label: "Resources", path: "/dashboard/resources" },
   { icon: Settings, label: "Settings", path: "/dashboard/settings" },
 ];
@@ -31,6 +40,16 @@ const navItems = [
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // ── Pull the authenticated user + logout handler from context ──
+  const { user, handleLogout } = useAuth();
+  const displayName = user?.user_metadata?.name || user?.email || "User";
+  const initials = displayName
+    .split(" ")
+    .map((w: string) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   const handleNav = (path: string) => {
     navigate(path);
@@ -43,7 +62,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center">
           <GraduationCap className="w-5 h-5 text-white" />
         </div>
-        <span className="tracking-tight" style={{ fontSize: "1.125rem", fontWeight: 600 }}>
+        <span
+          className="tracking-tight"
+          style={{ fontSize: "1.125rem", fontWeight: 600 }}
+        >
           SkillForge
         </span>
       </div>
@@ -61,10 +83,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               onClick={() => handleNav(item.path)}
               whileHover={{ x: 4 }}
               whileTap={{ scale: 0.98 }}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors cursor-pointer ${isActive
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors cursor-pointer ${
+                isActive
                   ? "bg-blue-600 text-white"
                   : "text-gray-400 hover:bg-white/5 hover:text-white"
-                }`}
+              }`}
               aria-label={item.label}
               style={{ fontSize: "0.875rem", fontWeight: 500 }}
             >
@@ -75,17 +98,31 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         })}
       </nav>
 
+      {/* ── Dynamic user info + logout button ── */}
       <div className="px-4 py-4 border-t border-white/10">
         <div className="flex items-center gap-3 px-2">
-          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center" style={{ fontSize: "0.75rem", fontWeight: 600 }}>
-            JC
+          <div
+            className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center"
+            style={{ fontSize: "0.75rem", fontWeight: 600 }}
+          >
+            {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="truncate" style={{ fontSize: "0.875rem", fontWeight: 500 }}>Jane Cooper</p>
-            <p className="text-gray-400 truncate" style={{ fontSize: "0.75rem" }}>Grade 2</p>
+            <p
+              className="truncate"
+              style={{ fontSize: "0.875rem", fontWeight: 500 }}
+            >
+              {displayName}
+            </p>
+            <p
+              className="text-gray-400 truncate"
+              style={{ fontSize: "0.75rem" }}
+            >
+              {user?.email}
+            </p>
           </div>
           <button
-            onClick={() => navigate("/")}
+            onClick={handleLogout}
             className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             aria-label="Log out"
           >

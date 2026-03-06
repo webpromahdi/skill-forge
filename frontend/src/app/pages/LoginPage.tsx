@@ -2,6 +2,8 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { useNavigate } from "react-router";
 import { GraduationCap, Eye, EyeOff } from "lucide-react";
+import { loginUser, type FieldError } from "../../services/authService";
+import { useAuth } from "../../contexts/AuthContext";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -9,9 +11,38 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // ── Error & loading state for the login flow ──
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // ── Use the global login() from AuthContext ──
+  // login(token) stores the JWT, fetches the user from GET /auth/me,
+  // and navigates to /dashboard — all in one call.
+  const { login } = useAuth();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/dashboard");
+    setError(null);
+    setFieldErrors([]);
+    setLoading(true);
+
+    // Call the backend POST /api/auth/login endpoint
+    const result = await loginUser(email, password);
+    setLoading(false);
+
+    if (!result.success) {
+      // Surface validation or authentication errors to the user
+      if (result.errors) {
+        setFieldErrors(result.errors);
+      }
+      setError(result.message);
+      return;
+    }
+
+    // Hand the token to AuthContext — it stores it, fetches the user,
+    // and redirects to /dashboard automatically.
+    await login(result.data.access_token);
   };
 
   return (
@@ -32,7 +63,10 @@ export function LoginPage() {
           >
             <GraduationCap className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-[#0F172A]" style={{ fontSize: "1.5rem", fontWeight: 700 }}>
+          <h1
+            className="text-[#0F172A]"
+            style={{ fontSize: "1.5rem", fontWeight: 700 }}
+          >
             Welcome back
           </h1>
           <p className="text-gray-500 mt-1" style={{ fontSize: "0.875rem" }}>
@@ -41,6 +75,31 @@ export function LoginPage() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+          {/* ── Display general or authentication errors ── */}
+          {error && (
+            <div
+              className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700"
+              style={{ fontSize: "0.8125rem" }}
+            >
+              {error}
+            </div>
+          )}
+
+          {/* ── Display per-field validation errors from the backend ── */}
+          {fieldErrors.length > 0 && (
+            <ul
+              className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 list-disc list-inside"
+              style={{ fontSize: "0.8125rem" }}
+            >
+              {fieldErrors.map((fe) => (
+                <li key={fe.field}>
+                  <span className="font-medium capitalize">{fe.field}</span>:{" "}
+                  {fe.message}
+                </li>
+              ))}
+            </ul>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label
@@ -97,14 +156,18 @@ export function LoginPage() {
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               type="submit"
-              className="w-full py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
+              disabled={loading}
+              className="w-full py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ fontSize: "0.875rem", fontWeight: 600 }}
             >
-              Log in
+              {loading ? "Logging in…" : "Log in"}
             </motion.button>
           </form>
 
-          <p className="text-center text-gray-500 mt-6" style={{ fontSize: "0.8125rem" }}>
+          <p
+            className="text-center text-gray-500 mt-6"
+            style={{ fontSize: "0.8125rem" }}
+          >
             Don't have an account?{" "}
             <button
               onClick={() => navigate("/signup")}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { useNavigate } from "react-router";
 import { GraduationCap, Eye, EyeOff } from "lucide-react";
+import { registerUser, type FieldError } from "../../services/authService";
 
 export function SignupPage() {
   const navigate = useNavigate();
@@ -10,9 +11,32 @@ export function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // ── Error & loading state for the registration flow ──
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/dashboard");
+    setError(null);
+    setFieldErrors([]);
+    setLoading(true);
+
+    // Call the backend POST /api/auth/register endpoint
+    const result = await registerUser(name, email, password);
+    setLoading(false);
+
+    if (!result.success) {
+      // If the backend returned field-level validation errors, display them
+      if (result.errors) {
+        setFieldErrors(result.errors);
+      }
+      setError(result.message);
+      return;
+    }
+
+    // Registration succeeded — redirect to login so the user can sign in
+    navigate("/login");
   };
 
   return (
@@ -33,7 +57,10 @@ export function SignupPage() {
           >
             <GraduationCap className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-[#0F172A]" style={{ fontSize: "1.5rem", fontWeight: 700 }}>
+          <h1
+            className="text-[#0F172A]"
+            style={{ fontSize: "1.5rem", fontWeight: 700 }}
+          >
             Create your account
           </h1>
           <p className="text-gray-500 mt-1" style={{ fontSize: "0.875rem" }}>
@@ -42,6 +69,31 @@ export function SignupPage() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+          {/* ── Display general or network errors ── */}
+          {error && (
+            <div
+              className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700"
+              style={{ fontSize: "0.8125rem" }}
+            >
+              {error}
+            </div>
+          )}
+
+          {/* ── Display per-field validation errors from the backend ── */}
+          {fieldErrors.length > 0 && (
+            <ul
+              className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 list-disc list-inside"
+              style={{ fontSize: "0.8125rem" }}
+            >
+              {fieldErrors.map((fe) => (
+                <li key={fe.field}>
+                  <span className="font-medium capitalize">{fe.field}</span>:{" "}
+                  {fe.message}
+                </li>
+              ))}
+            </ul>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label
@@ -117,14 +169,18 @@ export function SignupPage() {
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               type="submit"
-              className="w-full py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
+              disabled={loading}
+              className="w-full py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ fontSize: "0.875rem", fontWeight: 600 }}
             >
-              Sign up
+              {loading ? "Creating account…" : "Sign up"}
             </motion.button>
           </form>
 
-          <p className="text-center text-gray-500 mt-6" style={{ fontSize: "0.8125rem" }}>
+          <p
+            className="text-center text-gray-500 mt-6"
+            style={{ fontSize: "0.8125rem" }}
+          >
             Already have an account?{" "}
             <button
               onClick={() => navigate("/login")}

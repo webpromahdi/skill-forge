@@ -1,7 +1,11 @@
 import { motion } from "motion/react";
 import { Sparkles } from "lucide-react";
+import { useAuth } from "../../../contexts/AuthContext";
 
 export function WelcomeCard() {
+  // ── Pull the authenticated user's name from context ──
+  const { user } = useAuth();
+  const displayName = user?.user_metadata?.name || user?.email || "Learner";
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -15,12 +19,18 @@ export function WelcomeCard() {
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-2">
           <Sparkles className="w-5 h-5 text-yellow-300" />
-          <span style={{ fontSize: "0.875rem", fontWeight: 500 }} className="text-blue-200">
+          <span
+            style={{ fontSize: "0.875rem", fontWeight: 500 }}
+            className="text-blue-200"
+          >
             Welcome back
           </span>
         </div>
-        <h2 className="text-white mb-1" style={{ fontSize: "1.5rem", fontWeight: 700 }}>
-          Jane Cooper
+        <h2
+          className="text-white mb-1"
+          style={{ fontSize: "1.5rem", fontWeight: 700 }}
+        >
+          {displayName}
         </h2>
         <p className="text-blue-200" style={{ fontSize: "0.875rem" }}>
           Goal: Frontend Developer &middot; 68% complete
@@ -28,15 +38,21 @@ export function WelcomeCard() {
 
         <div className="mt-5 flex flex-wrap gap-4">
           <div className="bg-white/10 backdrop-blur rounded-lg px-4 py-3">
-            <p className="text-blue-200" style={{ fontSize: "0.75rem" }}>Streak</p>
+            <p className="text-blue-200" style={{ fontSize: "0.75rem" }}>
+              Streak
+            </p>
             <p style={{ fontSize: "1.25rem", fontWeight: 700 }}>12 days</p>
           </div>
           <div className="bg-white/10 backdrop-blur rounded-lg px-4 py-3">
-            <p className="text-blue-200" style={{ fontSize: "0.75rem" }}>This Week</p>
+            <p className="text-blue-200" style={{ fontSize: "0.75rem" }}>
+              This Week
+            </p>
             <p style={{ fontSize: "1.25rem", fontWeight: 700 }}>4.5 hrs</p>
           </div>
           <div className="bg-white/10 backdrop-blur rounded-lg px-4 py-3">
-            <p className="text-blue-200" style={{ fontSize: "0.75rem" }}>XP Earned</p>
+            <p className="text-blue-200" style={{ fontSize: "0.75rem" }}>
+              XP Earned
+            </p>
             <p style={{ fontSize: "1.25rem", fontWeight: 700 }}>2,340</p>
           </div>
         </div>

@@ -1,11 +1,27 @@
 import { motion } from "motion/react";
 import { Sparkles } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
+import { Skeleton } from "../ui/Skeleton";
+import type { ProgressStats } from "../../../services/progressService";
 
-export function WelcomeCard() {
+interface WelcomeCardProps {
+  stats: ProgressStats | null;
+  loading?: boolean;
+}
+
+export function WelcomeCard({ stats, loading }: WelcomeCardProps) {
   // ── Pull the authenticated user's name from context ──
   const { user } = useAuth();
   const displayName = user?.user_metadata?.name || user?.email || "Learner";
+
+  const streak = stats?.streak ?? 0;
+  const studyHours = ((stats?.studyTime ?? 0) / 60).toFixed(1);
+  const xp = (stats?.xp ?? 0).toLocaleString();
+  const lessonsCompleted = stats?.lessonsCompleted ?? 0;
+  const goalProgress =
+    lessonsCompleted > 0
+      ? Math.min(100, Math.round((lessonsCompleted / 36) * 100))
+      : 0;
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -33,7 +49,7 @@ export function WelcomeCard() {
           {displayName}
         </h2>
         <p className="text-blue-200" style={{ fontSize: "0.875rem" }}>
-          Goal: Frontend Developer &middot; 68% complete
+          Goal: Frontend Developer &middot; {goalProgress}% complete
         </p>
 
         <div className="mt-5 flex flex-wrap gap-4">
@@ -41,19 +57,35 @@ export function WelcomeCard() {
             <p className="text-blue-200" style={{ fontSize: "0.75rem" }}>
               Streak
             </p>
-            <p style={{ fontSize: "1.25rem", fontWeight: 700 }}>12 days</p>
+            {loading ? (
+              <Skeleton className="w-16 h-6 mt-1 bg-white/20" />
+            ) : (
+              <p style={{ fontSize: "1.25rem", fontWeight: 700 }}>
+                {streak} days
+              </p>
+            )}
           </div>
           <div className="bg-white/10 backdrop-blur rounded-lg px-4 py-3">
             <p className="text-blue-200" style={{ fontSize: "0.75rem" }}>
               This Week
             </p>
-            <p style={{ fontSize: "1.25rem", fontWeight: 700 }}>4.5 hrs</p>
+            {loading ? (
+              <Skeleton className="w-16 h-6 mt-1 bg-white/20" />
+            ) : (
+              <p style={{ fontSize: "1.25rem", fontWeight: 700 }}>
+                {studyHours} hrs
+              </p>
+            )}
           </div>
           <div className="bg-white/10 backdrop-blur rounded-lg px-4 py-3">
             <p className="text-blue-200" style={{ fontSize: "0.75rem" }}>
               XP Earned
             </p>
-            <p style={{ fontSize: "1.25rem", fontWeight: 700 }}>2,340</p>
+            {loading ? (
+              <Skeleton className="w-16 h-6 mt-1 bg-white/20" />
+            ) : (
+              <p style={{ fontSize: "1.25rem", fontWeight: 700 }}>{xp}</p>
+            )}
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { WelcomeCard } from "../components/features/WelcomeCard";
 import { RecommendationCard } from "../components/features/RecommendationCard";
@@ -7,6 +7,7 @@ import { QuickActions } from "../components/features/QuickActions";
 import { UpcomingDeadlines } from "../components/features/UpcomingDeadlines";
 import { ActivityCard } from "../components/features/ActivityCard";
 import { StatCard } from "../components/ui/StatCard";
+import { StatCardSkeleton } from "../components/ui/Skeleton";
 import { KanbanBoard } from "../components/features/KanbanBoard";
 import {
   LayoutList,
@@ -17,6 +18,11 @@ import {
   Flame,
   Trophy,
 } from "lucide-react";
+import {
+  getProgress,
+  type ProgressStats,
+  type ProgressTopic,
+} from "../../services/progressService";
 
 const weeklyActivities = [
   {
@@ -73,54 +79,89 @@ const weeklyActivities = [
 
 export function DashboardPage() {
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
+  const [stats, setStats] = useState<ProgressStats | null>(null);
+  const [topics, setTopics] = useState<ProgressTopic[]>([]);
+  const [progressLoading, setProgressLoading] = useState(true);
+  const [progressError, setProgressError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchProgress() {
+      setProgressLoading(true);
+      const res = await getProgress();
+      if (res.success) {
+        setStats(res.data.stats);
+        setTopics(res.data.topics);
+        setProgressError(null);
+      } else {
+        setProgressError(res.message);
+      }
+      setProgressLoading(false);
+    }
+    fetchProgress();
+  }, []);
 
   return (
     <div className="space-y-8">
       {/* Welcome banner */}
-      <WelcomeCard />
+      <WelcomeCard stats={stats} loading={progressLoading} />
 
       {/* Stat cards row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          icon={BookOpen}
-          label="Lessons Completed"
-          value="24"
-          change="+3 this week"
-          changeType="positive"
-          iconBg="bg-blue-100"
-          iconColor="text-blue-600"
-          delay={0.05}
-        />
-        <StatCard
-          icon={Clock}
-          label="Study Time"
-          value="4.5h"
-          change="This week"
-          changeType="neutral"
-          iconBg="bg-purple-100"
-          iconColor="text-purple-600"
-          delay={0.1}
-        />
-        <StatCard
-          icon={Flame}
-          label="Current Streak"
-          value="12 days"
-          change="Best: 12"
-          changeType="positive"
-          iconBg="bg-orange-100"
-          iconColor="text-orange-600"
-          delay={0.15}
-        />
-        <StatCard
-          icon={Trophy}
-          label="Total XP"
-          value="2,340"
-          change="+480"
-          changeType="positive"
-          iconBg="bg-yellow-100"
-          iconColor="text-yellow-600"
-          delay={0.2}
-        />
+        {progressLoading ? (
+          <>
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </>
+        ) : progressError ? (
+          <div className="col-span-full text-center text-red-500 py-4">
+            {progressError}
+          </div>
+        ) : (
+          <>
+            <StatCard
+              icon={BookOpen}
+              label="Lessons Completed"
+              value={String(stats?.lessonsCompleted ?? 0)}
+              change="+3 this week"
+              changeType="positive"
+              iconBg="bg-blue-100"
+              iconColor="text-blue-600"
+              delay={0.05}
+            />
+            <StatCard
+              icon={Clock}
+              label="Study Time"
+              value={`${((stats?.studyTime ?? 0) / 60).toFixed(1)}h`}
+              change="This week"
+              changeType="neutral"
+              iconBg="bg-purple-100"
+              iconColor="text-purple-600"
+              delay={0.1}
+            />
+            <StatCard
+              icon={Flame}
+              label="Current Streak"
+              value={`${stats?.streak ?? 0} days`}
+              change={`Best: ${stats?.streak ?? 0}`}
+              changeType="positive"
+              iconBg="bg-orange-100"
+              iconColor="text-orange-600"
+              delay={0.15}
+            />
+            <StatCard
+              icon={Trophy}
+              label="Total XP"
+              value={(stats?.xp ?? 0).toLocaleString()}
+              change="+480"
+              changeType="positive"
+              iconBg="bg-yellow-100"
+              iconColor="text-yellow-600"
+              delay={0.2}
+            />
+          </>
+        )}
       </div>
 
       {/* Quick Actions */}
@@ -132,7 +173,7 @@ export function DashboardPage() {
           <RecommendationCard />
         </div>
         <div className="lg:col-span-1">
-          <LearningProgress />
+          <LearningProgress topics={topics} loading={progressLoading} />
         </div>
         <div className="lg:col-span-1">
           <UpcomingDeadlines />

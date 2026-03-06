@@ -97,6 +97,135 @@ export async function upsertProgress(userId, progressData) {
   return data;
 }
 
+// ─── getChartData ───────────────────────────────────────────────────────────
+// Derives chart datasets from user_progress and quiz_results for the
+// Progress page charts (weekly study hours, monthly progress, activity
+// breakdown).
+export async function getChartData(userId) {
+  // Fetch user progress rows
+  const { data: progressRows, error: pErr } = await supabase
+    .from("user_progress")
+    .select("*")
+    .eq("user_id", userId);
+
+  if (pErr) throw pErr;
+
+  // Fetch quiz results for the user
+  const { data: quizRows, error: qErr } = await supabase
+    .from("quiz_results")
+    .select("*")
+    .eq("user_id", userId);
+
+  if (qErr) throw qErr;
+
+  const rows = progressRows || [];
+  const quizzes = quizRows || [];
+
+  // ── Weekly study hours (last 7 days) ─────────────────────────────────
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const weeklyData = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateKey = d.toISOString().slice(0, 10);
+    const dayLabel = dayNames[d.getDay()];
+
+    // Topics whose last_updated falls on this day
+    const dayTopics = rows.filter(
+      (r) => new Date(r.last_updated).toISOString().slice(0, 10) === dateKey,
+    );
+
+    // Quizzes completed on this day
+    const dayQuizzes = quizzes.filter(
+      (q) => new Date(q.completed_at).toISOString().slice(0, 10) === dateKey,
+    );
+
+    const hours = dayTopics.reduce((sum, t) => sum + (t.study_time || 0), 0);
+    const xp =
+      dayTopics.reduce((sum, t) => sum + (t.xp || 0), 0) +
+      dayQuizzes.reduce((sum, q) => sum + (q.xp_earned || 0), 0);
+
+    weeklyData.push({
+      day: dayLabel,
+      hours: Math.round(hours * 10) / 10,
+      xp,
+    });
+  }
+
+  // ── Monthly progress (last 4 weeks) ──────────────────────────────────
+  const monthlyData = [];
+
+  for (let w = 3; w >= 0; w--) {
+    const weekEnd = new Date();
+    weekEnd.setHours(23, 59, 59, 999);
+    weekEnd.setDate(weekEnd.getDate() - w * 7);
+
+    const weekStart = new Date(weekEnd);
+    weekStart.setDate(weekStart.getDate() - 6);
+    weekStart.setHours(0, 0, 0, 0);
+
+    const weekTopics = rows.filter((r) => {
+      const updated = new Date(r.last_updated);
+      return updated >= weekStart && updated <= weekEnd;
+    });
+
+    const hours = weekTopics.reduce((sum, t) => sum + (t.study_time || 0), 0);
+    const lessons = weekTopics.reduce(
+      (sum, t) => sum + (t.lessons_completed || 0),
+      0,
+    );
+
+    monthlyData.push({
+      week: `W${4 - w}`,
+      hours: Math.round(hours * 10) / 10,
+      lessons,
+    });
+  }
+
+  // ── Activity breakdown ───────────────────────────────────────────────
+  const totalLessons = rows.reduce((s, r) => s + (r.lessons_completed || 0), 0);
+  const totalStudyHours = rows.reduce((s, r) => s + (r.study_time || 0), 0);
+  const totalQuizzes = quizzes.length;
+
+  const activityTotal = totalLessons + totalQuizzes + totalStudyHours;
+
+  const activityTypeData =
+    activityTotal > 0
+      ? [
+          {
+            name: "Lessons",
+            value: Math.round((totalLessons / activityTotal) * 100),
+            color: "#3B82F6",
+          },
+          {
+            name: "Quizzes",
+            value: Math.round((totalQuizzes / activityTotal) * 100),
+            color: "#10B981",
+          },
+          {
+            name: "Practice",
+            value: Math.round((totalStudyHours / activityTotal) * 100),
+            color: "#F59E0B",
+          },
+        ]
+      : [
+          { name: "Lessons", value: 0, color: "#3B82F6" },
+          { name: "Quizzes", value: 0, color: "#10B981" },
+          { name: "Practice", value: 0, color: "#F59E0B" },
+        ];
+
+  // Ensure percentages sum to 100 when there is data
+  if (activityTotal > 0) {
+    const sum = activityTypeData.reduce((s, a) => s + a.value, 0);
+    if (sum !== 100) {
+      activityTypeData[0].value += 100 - sum;
+    }
+  }
+
+  return { weeklyData, monthlyData, activityTypeData };
+}
+
 // ─── calculateStreak ────────────────────────────────────────────────────────
 // Simple streak calculator: counts consecutive days (backward from today)
 // that have at least one progress update.

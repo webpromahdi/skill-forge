@@ -19,10 +19,14 @@ import {
   Layers,
 } from "lucide-react";
 import {
-  getProgress,
-  type ProgressTopic,
-} from "../../services/progressService";
+  getLearningPath,
+  type LPEntry,
+  type LPLesson,
+} from "../../services/learningPathService";
 
+// ─── Module type used by the UI ──────────────────────────────────────────────
+// Built from the GET /api/learning-path response (LPEntry).
+// Icons are assigned client-side based on module title.
 interface Lesson {
   title: string;
   duration: string;
@@ -41,116 +45,42 @@ interface Module {
   xp: number;
 }
 
-// ── Static curriculum structure ──────────────────────────────────────────────
-// Module titles, descriptions, lessons, and durations define the curriculum.
-// Dynamic values (status, progress, xp) are merged from GET /api/progress.
-interface CurriculumModule {
-  id: string;
-  title: string;
-  topicName: string; // matches ProgressTopic.name from API
-  description: string;
-  icon: React.ElementType;
-  lessons: Lesson[];
-  totalTime: string;
-  baseXp: number;
+// ── Icon mapping by module title ─────────────────────────────────────────────
+// Icons are purely a UI concern so they stay on the frontend.
+const moduleIcons: Record<string, React.ElementType> = {
+  "HTML Fundamentals": Code,
+  "CSS Fundamentals": Palette,
+  "JavaScript Basics": FileText,
+  "React Basics": Layers,
+};
+
+// ── Convert minutes to a human-readable total ───────────────────────────────
+function formatTotalTime(minutes: number): string {
+  if (minutes < 60) return `${minutes} min`;
+  const hrs = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins > 0 ? `${hrs}.${Math.round((mins / 60) * 10)} hrs` : `${hrs} hrs`;
 }
 
-const curriculum: CurriculumModule[] = [
-  {
-    id: "html",
-    title: "HTML Fundamentals",
-    topicName: "HTML Basics",
-    description:
-      "Learn the building blocks of web pages — tags, attributes, forms, and semantic markup.",
-    icon: Code,
-    totalTime: "3.5 hrs",
-    baseXp: 450,
-    lessons: [
-      { title: "Introduction to HTML", duration: "15 min", type: "video" },
-      { title: "Tags & Elements", duration: "20 min", type: "reading" },
-      { title: "Forms & Inputs", duration: "30 min", type: "practice" },
-      { title: "Semantic HTML", duration: "25 min", type: "video" },
-      { title: "HTML Quiz", duration: "15 min", type: "quiz" },
-    ],
-  },
-  {
-    id: "css",
-    title: "CSS Fundamentals",
-    topicName: "CSS Fundamentals",
-    description:
-      "Master styling with selectors, layouts, Flexbox, Grid, and responsive design.",
-    icon: Palette,
-    totalTime: "5 hrs",
-    baseXp: 600,
-    lessons: [
-      {
-        title: "CSS Selectors & Specificity",
-        duration: "20 min",
-        type: "video",
-      },
-      { title: "Box Model Deep Dive", duration: "25 min", type: "reading" },
-      { title: "Flexbox Layout", duration: "35 min", type: "practice" },
-      { title: "CSS Grid Mastery", duration: "40 min", type: "practice" },
-      { title: "Responsive Design", duration: "30 min", type: "video" },
-      { title: "CSS Quiz", duration: "15 min", type: "quiz" },
-    ],
-  },
-  {
-    id: "js",
-    title: "JavaScript Basics",
-    topicName: "JavaScript Basics",
-    description:
-      "Understand variables, functions, DOM manipulation, events, and async patterns.",
-    icon: FileText,
-    totalTime: "8 hrs",
-    baseXp: 800,
-    lessons: [
-      { title: "Variables & Data Types", duration: "20 min", type: "video" },
-      { title: "Functions & Scope", duration: "30 min", type: "reading" },
-      { title: "DOM Manipulation", duration: "45 min", type: "practice" },
-      { title: "Events & Listeners", duration: "25 min", type: "video" },
-      { title: "Async JavaScript", duration: "40 min", type: "practice" },
-      { title: "Build a Todo App", duration: "60 min", type: "practice" },
-      { title: "JavaScript Quiz", duration: "20 min", type: "quiz" },
-    ],
-  },
-  {
-    id: "react",
-    title: "React Basics",
-    topicName: "React Basics",
-    description:
-      "Components, JSX, state, props, hooks, and building interactive UIs.",
-    icon: Layers,
-    totalTime: "10 hrs",
-    baseXp: 1000,
-    lessons: [
-      { title: "Introduction to React", duration: "20 min", type: "video" },
-      { title: "JSX & Components", duration: "30 min", type: "reading" },
-      { title: "State & Props", duration: "35 min", type: "practice" },
-      { title: "React Hooks", duration: "45 min", type: "video" },
-      { title: "Build a Dashboard", duration: "90 min", type: "practice" },
-      { title: "React Quiz", duration: "20 min", type: "quiz" },
-    ],
-  },
-];
-
-// ── Merge API progress into curriculum structure ────────────────────────────
-function buildModules(topics: ProgressTopic[]): Module[] {
-  return curriculum.map((cur) => {
-    const topic = topics.find((t) => t.name === cur.topicName);
-    return {
-      id: cur.id,
-      title: cur.title,
-      description: cur.description,
-      icon: cur.icon,
-      lessons: cur.lessons,
-      totalTime: cur.totalTime,
-      // Dynamic values from API (fallback to defaults when no data)
-      status: topic?.status ?? "not-started",
-      progress: topic?.progress ?? 0,
-      xp: topic?.xp ?? cur.baseXp,
-    };
-  });
+// ── Transform API entries into UI modules ───────────────────────────────────
+function toModules(entries: LPEntry[]): Module[] {
+  return entries.map((e) => ({
+    id: e.module.id,
+    title: e.module.title,
+    description: e.module.description,
+    icon: moduleIcons[e.module.title] || BookOpen,
+    status: e.status,
+    progress: e.progress,
+    xp: e.xp,
+    totalTime: formatTotalTime(
+      e.lessons.reduce((sum, l) => sum + l.duration, 0),
+    ),
+    lessons: e.lessons.map((l) => ({
+      title: l.title,
+      duration: `${l.duration} min`,
+      type: l.type,
+    })),
+  }));
 }
 
 const typeIcons: Record<string, React.ElementType> = {
@@ -360,24 +290,26 @@ function ModuleCard({
 }
 
 export function LearningPathPage() {
-  // ── Fetch progress from GET /api/progress and merge into curriculum ──
-  const [modules, setModules] = useState<Module[]>(() => buildModules([]));
+  // ── Fetch learning path from GET /api/learning-path ──
+  // The backend returns modules with lessons, progress, and status.
+  // React Basics is locked on the server until JS progress >= 70%.
+  const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchProgress() {
+    async function fetchLearningPath() {
       setLoading(true);
-      const res = await getProgress();
+      const res = await getLearningPath();
       if (res.success) {
-        setModules(buildModules(res.data.topics));
+        setModules(toModules(res.data));
         setError(null);
       } else {
         setError(res.message);
       }
       setLoading(false);
     }
-    fetchProgress();
+    fetchLearningPath();
   }, []);
 
   // ── Compute header summary dynamically ──

@@ -1,6 +1,7 @@
 import {
   getUserProgress,
   upsertProgress,
+  getChartData,
 } from "../services/progressService.js";
 
 // ─── Progress Controller ────────────────────────────────────────────────────
@@ -62,6 +63,29 @@ export const updateProgress = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to update progress",
+    });
+  }
+};
+
+// ─── getCharts ──────────────────────────────────────────────────────────────
+// GET /api/progress/charts
+//
+// Returns chart datasets (weekly study hours, monthly progress, activity
+// breakdown) derived from the authenticated user's progress and quiz data.
+export const getCharts = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const charts = await getChartData(userId);
+
+    return res.status(200).json({
+      success: true,
+      data: charts,
+    });
+  } catch (err) {
+    console.error("[GET CHARTS ERROR]", err.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch chart data",
     });
   }
 };

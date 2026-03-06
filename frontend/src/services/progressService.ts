@@ -22,6 +22,44 @@ export interface ProgressStats {
   xp: number;
 }
 
+// ─── Chart types ────────────────────────────────────────────────────────────
+
+export interface WeeklyDataPoint {
+  day: string;
+  hours: number;
+  xp: number;
+}
+
+export interface MonthlyDataPoint {
+  week: string;
+  hours: number;
+  lessons: number;
+}
+
+export interface ActivityTypePoint {
+  name: string;
+  value: number;
+  color: string;
+}
+
+export interface ChartData {
+  weeklyData: WeeklyDataPoint[];
+  monthlyData: MonthlyDataPoint[];
+  activityTypeData: ActivityTypePoint[];
+}
+
+interface ChartSuccess {
+  success: true;
+  data: ChartData;
+}
+
+interface ChartError {
+  success: false;
+  message: string;
+}
+
+type ChartResponse = ChartSuccess | ChartError;
+
 export interface ProgressData {
   stats: ProgressStats;
   topics: ProgressTopic[];
@@ -63,6 +101,17 @@ export async function updateProgress(body: {
       method: "POST",
       body: JSON.stringify(body),
     });
+  } catch {
+    return { success: false, message: "Network error — please try again" };
+  }
+}
+
+// ─── getChartData ───────────────────────────────────────────────────────────
+// Calls GET /progress/charts. Returns weekly, monthly, and activity
+// breakdown datasets for the Progress page charts.
+export async function getChartData(): Promise<ChartResponse> {
+  try {
+    return await apiFetch<ChartResponse>("/progress/charts");
   } catch {
     return { success: false, message: "Network error — please try again" };
   }

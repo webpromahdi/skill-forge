@@ -28,34 +28,15 @@ import {
 } from "recharts";
 import {
   getProgress,
+  getChartData,
   type ProgressStats,
   type ProgressTopic,
+  type WeeklyDataPoint,
+  type MonthlyDataPoint,
+  type ActivityTypePoint,
 } from "../../services/progressService";
 
-// ── Static chart data ────────────────────────────────────────────────────────
-// TODO: Replace with a backend chart/analytics endpoint when available.
-// No GET /api/progress/chart endpoint exists yet — these remain static
-// placeholders so the UI is not empty.
-const weeklyData = [
-  { day: "Mon", hours: 1.5, xp: 180 },
-  { day: "Tue", hours: 2.0, xp: 240 },
-  { day: "Wed", hours: 0.5, xp: 60 },
-  { day: "Thu", hours: 1.8, xp: 210 },
-  { day: "Fri", hours: 2.5, xp: 300 },
-  { day: "Sat", hours: 3.0, xp: 350 },
-  { day: "Sun", hours: 1.2, xp: 140 },
-];
-
-// TODO: Replace with backend analytics endpoint when available.
-const monthlyData = [
-  { week: "W1", hours: 8, lessons: 12 },
-  { week: "W2", hours: 10, lessons: 15 },
-  { week: "W3", hours: 6, lessons: 9 },
-  { week: "W4", hours: 12, lessons: 18 },
-];
-
-// ── Skill breakdown derived from API topics ─────────────────────────────────
-// Colour map for known topics; fallback grey for unknown ones.
+// ── Skill breakdown colour map ──────────────────────────────────────────────
 const skillColors: Record<string, string> = {
   "HTML Basics": "#22C55E",
   "CSS Fundamentals": "#3B82F6",
@@ -63,12 +44,28 @@ const skillColors: Record<string, string> = {
   "React Basics": "#E5E7EB",
 };
 
-// TODO: Replace with backend analytics endpoint when available.
-const activityTypeData = [
-  { name: "Videos", value: 35, color: "#3B82F6" },
-  { name: "Reading", value: 25, color: "#8B5CF6" },
-  { name: "Practice", value: 30, color: "#22C55E" },
-  { name: "Quizzes", value: 10, color: "#F59E0B" },
+// ── Default empty chart data ────────────────────────────────────────────────
+const emptyWeekly: WeeklyDataPoint[] = [
+  { day: "Mon", hours: 0, xp: 0 },
+  { day: "Tue", hours: 0, xp: 0 },
+  { day: "Wed", hours: 0, xp: 0 },
+  { day: "Thu", hours: 0, xp: 0 },
+  { day: "Fri", hours: 0, xp: 0 },
+  { day: "Sat", hours: 0, xp: 0 },
+  { day: "Sun", hours: 0, xp: 0 },
+];
+
+const emptyMonthly: MonthlyDataPoint[] = [
+  { week: "W1", hours: 0, lessons: 0 },
+  { week: "W2", hours: 0, lessons: 0 },
+  { week: "W3", hours: 0, lessons: 0 },
+  { week: "W4", hours: 0, lessons: 0 },
+];
+
+const emptyActivity: ActivityTypePoint[] = [
+  { name: "Lessons", value: 0, color: "#3B82F6" },
+  { name: "Quizzes", value: 0, color: "#10B981" },
+  { name: "Practice", value: 0, color: "#F59E0B" },
 ];
 
 // ── Achievements ────────────────────────────────────────────────────────────
@@ -124,20 +121,40 @@ export function ProgressPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // ── Chart data from GET /api/progress/charts ──
+  const [weeklyData, setWeeklyData] = useState<WeeklyDataPoint[]>(emptyWeekly);
+  const [monthlyData, setMonthlyData] =
+    useState<MonthlyDataPoint[]>(emptyMonthly);
+  const [activityTypeData, setActivityTypeData] =
+    useState<ActivityTypePoint[]>(emptyActivity);
+
   useEffect(() => {
-    async function fetchProgress() {
+    async function fetchAll() {
       setLoading(true);
-      const res = await getProgress();
-      if (res.success) {
-        setStats(res.data.stats);
-        setTopics(res.data.topics);
+
+      // Fetch progress stats and chart data in parallel
+      const [progressRes, chartRes] = await Promise.all([
+        getProgress(),
+        getChartData(),
+      ]);
+
+      if (progressRes.success) {
+        setStats(progressRes.data.stats);
+        setTopics(progressRes.data.topics);
         setError(null);
       } else {
-        setError(res.message);
+        setError(progressRes.message);
       }
+
+      if (chartRes.success) {
+        setWeeklyData(chartRes.data.weeklyData);
+        setMonthlyData(chartRes.data.monthlyData);
+        setActivityTypeData(chartRes.data.activityTypeData);
+      }
+
       setLoading(false);
     }
-    fetchProgress();
+    fetchAll();
   }, []);
 
   // Derive skill breakdown from API topic data (dynamic)
@@ -156,6 +173,15 @@ export function ProgressPage() {
         ];
 
   const achievements = buildAchievements(stats);
+
+  // Compute weekly trend: compare last 3 days vs first 4 days
+  const recentHours = weeklyData.slice(-3).reduce((s, d) => s + d.hours, 0);
+  const earlierHours = weeklyData.slice(0, 4).reduce((s, d) => s + d.hours, 0);
+  const weeklyTrend =
+    earlierHours > 0
+      ? Math.round(((recentHours - earlierHours) / earlierHours) * 100)
+      : 0;
+  const totalWeeklyHours = weeklyData.reduce((s, d) => s + d.hours, 0);
 
   return (
     <div className="space-y-8">
@@ -238,10 +264,17 @@ export function ProgressPage() {
               </p>
             </div>
             <div
-              className="flex items-center gap-1 text-green-600 bg-green-50 px-2.5 py-1 rounded-full"
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-full ${
+                weeklyTrend >= 0
+                  ? "text-green-600 bg-green-50"
+                  : "text-red-500 bg-red-50"
+              }`}
               style={{ fontSize: "0.75rem", fontWeight: 600 }}
             >
-              <TrendingUp className="w-3.5 h-3.5" /> +18%
+              <TrendingUp className="w-3.5 h-3.5" />{" "}
+              {totalWeeklyHours > 0
+                ? `${weeklyTrend >= 0 ? "+" : ""}${weeklyTrend}%`
+                : "No data"}
             </div>
           </div>
           <div className="h-56">

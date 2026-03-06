@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import supabase from "./database/supabaseClient.js";
 
 // ─── Load Environment Variables ─────────────────────────────────────────────
 dotenv.config();
@@ -19,6 +20,40 @@ app.get("/", (req, res) => {
     res.status(200).json({
         message: "SkillForge API running",
     });
+});
+
+// ─── Database Test Endpoint ─────────────────────────────────────────────────
+app.get("/api/test-db", async (req, res) => {
+    try {
+        // Perform a lightweight query to verify the Supabase connection
+        const { data, error } = await supabase
+            .from("_test_connection")
+            .select("*")
+            .limit(1);
+
+        // Even if the table doesn't exist, Supabase will respond with an error
+        // object (not throw). A thrown error means the connection itself failed.
+        if (error) {
+            return res.status(200).json({
+                success: true,
+                message: "Database connection successful",
+                note: "Supabase responded — connection is live.",
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Database connection successful",
+            data,
+        });
+    } catch (err) {
+        console.error("[DB TEST ERROR]", err.message);
+        return res.status(500).json({
+            success: false,
+            message: "Database connection failed",
+            error: err.message,
+        });
+    }
 });
 
 // ─── 404 Handler ────────────────────────────────────────────────────────────

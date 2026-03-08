@@ -10,22 +10,58 @@
 //   6. Fetches matching resources from the resources table
 //   7. Returns the full recommendation with attached resources
 //
+// Phase-based Resource Generation Workflow:
+//   1. Controller calls generatePhaseResources(userId)
+//   2. Detects user's goal → fetches learning path → extracts phases
+//   3. Sends phases to AI model for structured resource generation
+//   4. Stores generated resources in recommendation_resources table
+//   5. Returns resources grouped by phase
+//
 // Controllers call these functions instead of querying Supabase directly,
 // keeping HTTP concerns separate from business logic.
 
 import supabase from "../database/supabaseClient.js";
 import { buildPrompt } from "../utils/promptBuilder.js";
-import { getAIRecommendation } from "./aiService.js";
+import { getAIRecommendation, getAIPhaseResources } from "./aiService.js";
 
 // ─── gatherUserData ─────────────────────────────────────────────────────────
 // Collects all learning data needed to build the AI prompt:
 //   • Progress rows (completed topics + in-progress topics)
 //   • Quiz results (best score per topic)
 //   • Learning goal from user metadata (defaults to "General Web Development")
+//   • Available topics for the user's goal from learning_topics table
 //
 // @param {string} userId - The authenticated user's ID
-// @returns {Object} { goal, completedTopics, currentProgress, quizScores }
+// @returns {Object} { goal, completedTopics, currentProgress, quizScores, availableTopics, goalId }
 async function gatherUserData(userId) {
+  // ── Fetch user's learning goal from their profile ──────────────────
+  const { data: profileRow } = await supabase
+    .from("user_profiles")
+    .select("learning_goal")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const goal = profileRow?.learning_goal || "General Web Development";
+
+  // ── Resolve goal_id from learning_goals table ──────────────────────
+  const { data: goalRow } = await supabase
+    .from("learning_goals")
+    .select("id")
+    .eq("name", goal)
+    .maybeSingle();
+
+  const goalId = goalRow?.id || null;
+
+  // ── Fetch available topics for this goal ───────────────────────────
+  let availableTopics = [];
+  if (goalId) {
+    const { data: topicRows } = await supabase
+      .from("learning_topics")
+      .select("title")
+      .eq("goal_id", goalId);
+    availableTopics = (topicRows || []).map((r) => r.title);
+  }
+
   // ── Fetch user progress rows ───────────────────────────────────────
   const { data: progressRows, error: pErr } = await supabase
     .from("user_progress")
@@ -92,10 +128,12 @@ async function gatherUserData(userId) {
   );
 
   return {
-    goal: "Frontend Developer", // Could be stored in user profile later
+    goal,
+    goalId,
     completedTopics,
     currentProgress,
     quizScores,
+    availableTopics,
   };
 }
 
@@ -119,12 +157,29 @@ export async function generateRecommendation(userId) {
   // Step 3 — Send prompt to AI model and get recommendation
   const aiResult = await getAIRecommendation(prompt);
 
-  // Step 4 — Save the recommendation to the database
+  // Step 4 — Validate the AI-suggested topic exists in learning_topics
+  let validatedTopic = aiResult.next_topic;
+  if (userData.availableTopics.length > 0) {
+    const exactMatch = userData.availableTopics.find(
+      (t) => t.toLowerCase() === validatedTopic.toLowerCase(),
+    );
+    if (exactMatch) {
+      validatedTopic = exactMatch;
+    } else {
+      // Fallback: pick the first topic the user hasn't completed
+      const fallback = userData.availableTopics.find(
+        (t) => !userData.completedTopics.includes(t),
+      );
+      validatedTopic = fallback || userData.availableTopics[0];
+    }
+  }
+
+  // Step 5 — Save the recommendation to the database
   const { data: saved, error: saveErr } = await supabase
     .from("recommendations")
     .insert({
       user_id: userId,
-      topic: aiResult.next_topic,
+      topic: validatedTopic,
       reason: aiResult.reason,
       match_score: aiResult.match_score,
     })
@@ -133,8 +188,8 @@ export async function generateRecommendation(userId) {
 
   if (saveErr) throw saveErr;
 
-  // Step 5 — Fetch matching resources for the recommended topic
-  const resources = await fetchMatchingResources(aiResult.next_topic);
+  // Step 6 — Fetch matching resources for the recommended topic
+  const resources = await fetchMatchingResources(validatedTopic);
 
   return {
     id: saved.id,
@@ -197,4 +252,143 @@ async function fetchMatchingResources(topic) {
   }
 
   return data || [];
+}
+
+// ─── generatePhaseResources ─────────────────────────────────────────────────
+// Generates AI-powered learning resources for each phase of a user's learning path.
+//
+// Workflow:
+//   1. Detect user's selected goal from their profile
+//   2. Fetch the learning path (skill_paths) for that goal
+//   3. Extract phases from the learning path
+//   4. Send phases to AI model for structured resource generation
+//   5. Store generated resources in recommendation_resources table
+//   6. Return resources grouped by phase
+//
+// @param {string} userId - The authenticated user's ID
+// @returns {Object} { skill, phases: [{ title, resources: [...] }] }
+export async function generatePhaseResources(userId) {
+  // Step 1 — Get user's learning goal
+  const { data: profileRow } = await supabase
+    .from("user_profiles")
+    .select("learning_goal")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const goal = profileRow?.learning_goal || "Frontend Web Development";
+
+  // Step 2 — Fetch the learning path for this goal
+  const { data: skillPath, error: spErr } = await supabase
+    .from("skill_paths")
+    .select("skill, duration, phases")
+    .eq("skill", goal)
+    .maybeSingle();
+
+  if (spErr) throw spErr;
+
+  if (!skillPath) {
+    throw new Error(`No learning path found for goal: ${goal}`);
+  }
+
+  // Step 3 — Extract phases
+  const phases =
+    typeof skillPath.phases === "string"
+      ? JSON.parse(skillPath.phases)
+      : skillPath.phases;
+
+  if (!phases || phases.length === 0) {
+    throw new Error(`No phases found in learning path for: ${goal}`);
+  }
+
+  // Step 4 — Send phases to AI model for resource generation
+  const aiResources = await getAIPhaseResources(goal, phases);
+
+  // Step 5 — Clear old resources for this skill and store new ones
+  await supabase.from("recommendation_resources").delete().eq("skill", goal);
+
+  const rowsToInsert = [];
+  for (const phase of aiResources) {
+    for (const resource of phase.resources) {
+      rowsToInsert.push({
+        skill: goal,
+        phase_title: phase.title,
+        resource_type: resource.type,
+        source: resource.source,
+        title: resource.title,
+        url: resource.url,
+      });
+    }
+  }
+
+  if (rowsToInsert.length > 0) {
+    const { error: insertErr } = await supabase
+      .from("recommendation_resources")
+      .upsert(rowsToInsert, { onConflict: "skill,phase_title,resource_type" });
+
+    if (insertErr) throw insertErr;
+  }
+
+  // Step 6 — Return structured response
+  return {
+    skill: goal,
+    duration: skillPath.duration,
+    phases: aiResources,
+  };
+}
+
+// ─── getPhaseResources ──────────────────────────────────────────────────────
+// Fetches previously generated phase resources for a user's goal.
+//
+// @param {string} userId - The authenticated user's ID
+// @returns {Object|null} { skill, phases: [...] } or null if none yet
+export async function getPhaseResources(userId) {
+  // Get user's learning goal
+  const { data: profileRow } = await supabase
+    .from("user_profiles")
+    .select("learning_goal")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const goal = profileRow?.learning_goal || "Frontend Web Development";
+
+  // Fetch the skill path for duration info
+  const { data: skillPath } = await supabase
+    .from("skill_paths")
+    .select("duration")
+    .eq("skill", goal)
+    .maybeSingle();
+
+  // Fetch stored resources for this skill
+  const { data: resources, error } = await supabase
+    .from("recommendation_resources")
+    .select("*")
+    .eq("skill", goal)
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+  if (!resources || resources.length === 0) return null;
+
+  // Group resources by phase_title
+  const phaseMap = new Map();
+  for (const r of resources) {
+    if (!phaseMap.has(r.phase_title)) {
+      phaseMap.set(r.phase_title, {
+        title: r.phase_title,
+        resources: [],
+      });
+    }
+    phaseMap.get(r.phase_title).resources.push({
+      id: r.id,
+      type: r.resource_type,
+      source: r.source,
+      title: r.title,
+      url: r.url,
+    });
+  }
+
+  return {
+    skill: goal,
+    duration: skillPath?.duration || "",
+    phases: Array.from(phaseMap.values()),
+  };
 }

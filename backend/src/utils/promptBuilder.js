@@ -20,6 +20,7 @@
 // @param {string[]} userData.completedTopics - topics at 100 %
 // @param {Object[]} userData.currentProgress - { name, progress } for in-progress topics
 // @param {Object[]} userData.quizScores      - { topic, scorePercentage }
+// @param {string[]} userData.availableTopics - valid topics from learning_topics table
 // @returns {string} The full prompt text
 export function buildPrompt(userData) {
   const {
@@ -27,6 +28,7 @@ export function buildPrompt(userData) {
     completedTopics = [],
     currentProgress = [],
     quizScores = [],
+    availableTopics = [],
   } = userData;
 
   // ── Completed topics section ───────────────────────────────────────
@@ -47,6 +49,12 @@ export function buildPrompt(userData) {
       ? quizScores.map((q) => `- ${q.topic}: ${q.scorePercentage}%`).join("\n")
       : "- No quizzes taken yet";
 
+  // ── Available topics section ────────────────────────────────────────
+  const topicsSection =
+    availableTopics.length > 0
+      ? availableTopics.map((t) => `- ${t}`).join("\n")
+      : "- Any relevant topic";
+
   // ── Assemble the full prompt ───────────────────────────────────────
   return `You are an AI learning assistant for a web-development learning platform.
 
@@ -61,11 +69,14 @@ ${progressSection}
 Quiz performance:
 ${quizSection}
 
-Based on the student's completed topics, current progress, and quiz performance, suggest the single best next topic they should learn.
+You MUST choose the next topic from this exact list only:
+${topicsSection}
+
+Do NOT invent new topic names. Pick the single best next topic from the list above that the student has not yet completed.
 
 Return ONLY valid JSON (no markdown, no explanation) in this exact format:
 {
-  "next_topic": "<topic name>",
+  "next_topic": "<exact topic name from the list above>",
   "reason": "<1-2 sentence explanation of why this topic is recommended>",
   "difficulty": "<Beginner | Intermediate | Advanced>",
   "match_score": <integer 0-100 representing how strongly this matches the student's needs>

@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import dotenv from "dotenv";
 import supabase from "./database/supabaseClient.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -10,6 +11,7 @@ import recommendationRoutes from "./routes/recommendationRoutes.js";
 import learningPathRoutes from "./routes/learningPathRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import deadlineRoutes from "./routes/deadlineRoutes.js";
+import profileRoutes from "./routes/profileRoutes.js";
 
 // ─── Load Environment Variables ─────────────────────────────────────────────
 dotenv.config();
@@ -21,6 +23,7 @@ const PORT = process.env.PORT || 5000;
 // ─── Global Middleware ──────────────────────────────────────────────────────
 // CORS: only allow requests from known frontend origins.
 // ⚠️  Update the origin list when deploying to production (add your domain).
+app.use(helmet());
 app.use(
   cors({
     origin: ["http://localhost:5173"],
@@ -46,6 +49,7 @@ app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/learning-path", learningPathRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/deadlines", deadlineRoutes);
+app.use("/api/profile", profileRoutes);
 
 // ─── Database Test Endpoint ─────────────────────────────────────────────────
 app.get("/api/test-db", async (req, res) => {

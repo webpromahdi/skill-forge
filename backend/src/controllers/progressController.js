@@ -1,9 +1,24 @@
+import { z } from "zod";
 import {
   getUserProgress,
   upsertProgress,
   getChartData,
   getWeeklyActivities,
 } from "../services/progressService.js";
+
+// ─── Validation Schemas ─────────────────────────────────────────────────────
+
+// Schema for POST /api/progress/update
+const updateProgressSchema = z.object({
+  topic: z.string({ required_error: "topic is required" }).min(1),
+  progress_percentage: z
+    .number({ required_error: "progress_percentage is required" })
+    .min(0, "progress_percentage must be >= 0")
+    .max(100, "progress_percentage must be <= 100"),
+  lessons_completed: z.number().int().min(0).optional(),
+  study_time: z.number().min(0).optional(),
+  xp: z.number().int().min(0).optional(),
+});
 
 // ─── Progress Controller ────────────────────────────────────────────────────
 // HTTP handlers for the /api/progress endpoints.
@@ -43,17 +58,23 @@ export const getProgress = async (req, res) => {
 export const updateProgress = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { topic, progress_percentage } = req.body;
 
-    // Basic input validation
-    if (!topic || progress_percentage === undefined) {
+    // ── Validate input with Zod ──────────────────────────────────────
+    const parsed = updateProgressSchema.safeParse(req.body);
+    if (!parsed.success) {
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      const errors = Object.entries(fieldErrors).map(([field, messages]) => ({
+        field,
+        message: messages[0],
+      }));
       return res.status(400).json({
         success: false,
-        message: "Missing required fields: topic and progress_percentage",
+        message: "Validation error",
+        errors,
       });
     }
 
-    const updated = await upsertProgress(userId, req.body);
+    const updated = await upsertProgress(userId, parsed.data);
 
     return res.status(200).json({
       success: true,

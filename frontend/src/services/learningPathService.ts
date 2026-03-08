@@ -1,60 +1,68 @@
 // ─── Learning Path Service (Frontend) ────────────────────────────────────────
-// Fetches the authenticated user's learning path from the backend.
-// The JWT is automatically attached by apiFetch.
+// Fetches learning goals and skill-based learning paths from the backend.
 
 import { apiFetch } from "../lib/api";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-/** A single lesson within a module. */
-export interface LPLesson {
+/** A learning goal definition. */
+export interface LearningGoal {
   id: string;
-  title: string;
-  type: "video" | "reading" | "practice" | "quiz";
-  /** Duration in minutes. */
-  duration: number;
-  xp: number;
-}
-
-/** Module metadata returned by the API. */
-export interface LPModuleInfo {
-  id: string;
-  title: string;
+  name: string;
   description: string;
-  orderIndex: number;
-  difficulty: string;
 }
 
-/** A single entry in the learning path response array. */
-export interface LPEntry {
-  module: LPModuleInfo;
-  progress: number;
-  status: "completed" | "in-progress" | "not-started" | "locked";
-  xp: number;
-  lessonsCompleted: number;
-  totalLessons: number;
-  lessons: LPLesson[];
+/** A skill-based learning path. */
+export interface SkillPath {
+  id: string;
+  skill: string;
+  duration: string;
+  phases: string[];
 }
 
-interface LPSuccess {
+// ─── Response types ─────────────────────────────────────────────────────────
+
+interface GoalsSuccess {
   success: true;
-  data: LPEntry[];
+  data: LearningGoal[];
 }
 
-interface LPError {
+interface GoalsError {
   success: false;
   message: string;
 }
 
-export type LPResponse = LPSuccess | LPError;
+export type GoalsResponse = GoalsSuccess | GoalsError;
 
-// ─── getLearningPath ────────────────────────────────────────────────────────
-// Calls GET /learning-path.  Returns modules with lessons, progress, and
-// computed status (completed | in-progress | not-started | locked).
-// React Basics is locked until JavaScript Basics progress >= 70%.
-export async function getLearningPath(): Promise<LPResponse> {
+interface SkillPathSuccess {
+  success: true;
+  data: SkillPath;
+}
+
+interface SkillPathError {
+  success: false;
+  message: string;
+}
+
+export type SkillPathResponse = SkillPathSuccess | SkillPathError;
+
+// ─── getGoals ───────────────────────────────────────────────────────────────
+// Calls GET /learning-path/goals.  Returns all learning goals.
+export async function getGoals(): Promise<GoalsResponse> {
   try {
-    return await apiFetch<LPResponse>("/learning-path");
+    return await apiFetch<GoalsResponse>("/learning-path/goals");
+  } catch {
+    return { success: false, message: "Network error — please try again" };
+  }
+}
+
+// ─── getSkillPath ───────────────────────────────────────────────────────────
+// Fetches the learning path for a given skill/goal name.
+export async function getSkillPath(skill: string): Promise<SkillPathResponse> {
+  try {
+    return await apiFetch<SkillPathResponse>(
+      `/learning-path?skill=${encodeURIComponent(skill)}`,
+    );
   } catch {
     return { success: false, message: "Network error — please try again" };
   }

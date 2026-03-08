@@ -181,3 +181,191 @@ function parseAIResponse(raw) {
     throw err;
   }
 }
+
+// ─── getAIPhaseResources ────────────────────────────────────────────────────
+// Sends phases to the AI model and gets structured learning resources back.
+// Each phase returns 1 YouTube video resource and 1 blog/tutorial guide.
+//
+// @param {string} skill - The learning skill/goal name
+// @param {string[]} phases - Array of phase titles/descriptions
+// @returns {Array} Array of { title, resources: [{ type, source, title, url }] }
+export async function getAIPhaseResources(skill, phases) {
+  const provider = (process.env.AI_PROVIDER || "ollama").toLowerCase();
+
+  const prompt = buildPhaseResourcePrompt(skill, phases);
+
+  let content;
+  if (provider === "glm") {
+    content = await callGLMRaw(prompt);
+  } else {
+    content = await callOllamaRaw(prompt);
+  }
+
+  return parsePhaseResources(content, skill, phases);
+}
+
+// ─── buildPhaseResourcePrompt ───────────────────────────────────────────────
+// Builds a prompt asking the AI to generate structured learning resources.
+function buildPhaseResourcePrompt(skill, phases) {
+  const phaseList = phases.map((p, i) => `${i + 1}. ${p}`).join("\n");
+
+  return `You are an AI learning resource curator. Generate structured learning resources for the following skill and its phases.
+
+Skill: ${skill}
+
+Phases:
+${phaseList}
+
+For EACH phase, provide exactly:
+- 1 YouTube learning resource (type: "video", source should include "YouTube" and channel name)
+- 1 blog/tutorial guide (type: "article", from trusted sources like official docs, GeeksforGeeks, MDN, freeCodeCamp, HubSpot, etc.)
+
+Return ONLY valid JSON (no markdown, no explanation) as an array with this exact format:
+[
+  {
+    "title": "Phase Title",
+    "resources": [
+      {
+        "type": "video",
+        "source": "YouTube (Channel Name)",
+        "title": "Video Title",
+        "url": "https://www.youtube.com/watch?v=VIDEO_ID"
+      },
+      {
+        "type": "article",
+        "source": "Website Name",
+        "title": "Article Title",
+        "url": "https://example.com/article-url"
+      }
+    ]
+  }
+]
+
+Rules:
+- Each phase MUST have exactly 1 video and 1 article resource
+- Resources must be relevant to the phase topic within ${skill}
+- Use real, well-known educational resources and URLs
+- Prefer trusted sources: official documentation, YouTube channels like freeCodeCamp, Traversy Media, Web Dev Simplified, GeeksforGeeks, MDN, etc.
+- Return the array for ALL ${phases.length} phases`;
+}
+
+// ─── callGLMRaw ─────────────────────────────────────────────────────────────
+// Calls GLM and returns raw content string (no parsing into recommendation format).
+async function callGLMRaw(prompt) {
+  const apiKey = process.env.GLM_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      "GLM_API_KEY is not set. Add it to backend/.env or switch to AI_PROVIDER=ollama.",
+    );
+  }
+
+  const response = await fetch(
+    "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "glm-4-flash",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a helpful AI learning resource curator. Always respond with valid JSON only.",
+          },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 4000,
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`GLM API error (${response.status}): ${text}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) throw new Error("GLM returned an empty response");
+  return content;
+}
+
+// ─── callOllamaRaw ─────────────────────────────────────────────────────────
+// Calls Ollama and returns raw content string.
+async function callOllamaRaw(prompt) {
+  const baseUrl = process.env.OLLAMA_URL || "http://localhost:11434";
+  const model = process.env.OLLAMA_MODEL || "glm-5:cloud";
+  const apiKey = process.env.OLLAMA_API_KEY;
+
+  const headers = { "Content-Type": "application/json" };
+  if (apiKey) {
+    headers["Authorization"] = `Bearer ${apiKey}`;
+  }
+
+  const response = await fetch(`${baseUrl}/api/chat`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      model,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a helpful AI learning resource curator. Always respond with valid JSON only.",
+        },
+        { role: "user", content: prompt },
+      ],
+      stream: false,
+      options: { temperature: 0.7 },
+    }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Ollama API error (${response.status}): ${text}`);
+  }
+
+  const data = await response.json();
+  const content = data.message?.content;
+  if (!content) throw new Error("Ollama returned an empty response");
+  return content;
+}
+
+// ─── parsePhaseResources ────────────────────────────────────────────────────
+// Parses the AI response for phase resources. Falls back to provided resource
+// data if the AI returns invalid JSON.
+function parsePhaseResources(raw, skill, phases) {
+  let cleaned = raw.trim();
+  const fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenceMatch) {
+    cleaned = fenceMatch[1].trim();
+  }
+
+  try {
+    const parsed = JSON.parse(cleaned);
+
+    if (!Array.isArray(parsed)) {
+      throw new Error("AI response is not an array");
+    }
+
+    // Validate each phase has the required structure
+    return parsed.map((phase) => ({
+      title: phase.title || "Unknown Phase",
+      resources: (phase.resources || []).map((r) => ({
+        type: r.type || "article",
+        source: r.source || "",
+        title: r.title || "",
+        url: r.url || "",
+      })),
+    }));
+  } catch (err) {
+    console.error("[PARSE PHASE RESOURCES ERROR]", err.message);
+    throw new Error(
+      `AI returned invalid phase resources: ${cleaned.substring(0, 200)}`,
+    );
+  }
+}

@@ -1,0 +1,4 @@
+-- ─── Migration 009 ───────────────────────────────────────────────────────────
+-- (Legacy learning_paths / learning_steps tables removed.)
+-- This migration is intentionally left empty.
+-- The system now uses skill_paths (see migration 004).

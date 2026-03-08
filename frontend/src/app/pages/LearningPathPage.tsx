@@ -1,391 +1,343 @@
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { ProgressBar } from "../components/ui/ProgressBar";
-import { StatusBadge } from "../components/ui/StatusBadge";
 import { Skeleton } from "../components/ui/Skeleton";
 import {
-  CheckCircle2,
-  Circle,
-  Lock,
-  PlayCircle,
+  Sparkles,
   Clock,
+  Target,
+  CheckCircle2,
   BookOpen,
-  Star,
-  ChevronDown,
-  ChevronUp,
-  FileText,
-  Code,
-  Palette,
-  Layers,
+  ChevronRight,
 } from "lucide-react";
 import {
-  getLearningPath,
-  type LPEntry,
-  type LPLesson,
+  getSkillPath,
+  type SkillPath,
 } from "../../services/learningPathService";
+import { getProfile } from "../../services/userService";
 
-// ─── Module type used by the UI ──────────────────────────────────────────────
-// Built from the GET /api/learning-path response (LPEntry).
-// Icons are assigned client-side based on module title.
-interface Lesson {
-  title: string;
-  duration: string;
-  type: "video" | "reading" | "practice" | "quiz";
+// ─── Phase colors ────────────────────────────────────────────────────────────
+
+const PHASE_COLORS = [
+  {
+    gradient: "from-emerald-500 to-teal-600",
+    bg: "bg-emerald-50",
+    text: "text-emerald-700",
+    border: "border-emerald-200",
+    dot: "bg-emerald-500",
+    line: "from-emerald-400 to-blue-400",
+  },
+  {
+    gradient: "from-blue-500 to-indigo-600",
+    bg: "bg-blue-50",
+    text: "text-blue-700",
+    border: "border-blue-200",
+    dot: "bg-blue-500",
+    line: "from-blue-400 to-violet-400",
+  },
+  {
+    gradient: "from-violet-500 to-purple-600",
+    bg: "bg-violet-50",
+    text: "text-violet-700",
+    border: "border-violet-200",
+    dot: "bg-violet-500",
+    line: "from-violet-400 to-fuchsia-400",
+  },
+  {
+    gradient: "from-fuchsia-500 to-pink-600",
+    bg: "bg-fuchsia-50",
+    text: "text-fuchsia-700",
+    border: "border-fuchsia-200",
+    dot: "bg-fuchsia-500",
+    line: "from-fuchsia-400 to-rose-400",
+  },
+  {
+    gradient: "from-amber-500 to-orange-600",
+    bg: "bg-amber-50",
+    text: "text-amber-700",
+    border: "border-amber-200",
+    dot: "bg-amber-500",
+    line: "from-amber-400 to-orange-400",
+  },
+];
+
+function getPhaseColor(index: number) {
+  return PHASE_COLORS[index % PHASE_COLORS.length];
 }
 
-interface Module {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ElementType;
-  status: "completed" | "in-progress" | "locked" | "not-started";
-  progress: number;
-  lessons: Lesson[];
-  totalTime: string;
-  xp: number;
-}
-
-// ── Icon mapping by module title ─────────────────────────────────────────────
-// Icons are purely a UI concern so they stay on the frontend.
-const moduleIcons: Record<string, React.ElementType> = {
-  "HTML Fundamentals": Code,
-  "CSS Fundamentals": Palette,
-  "JavaScript Basics": FileText,
-  "React Basics": Layers,
-};
-
-// ── Convert minutes to a human-readable total ───────────────────────────────
-function formatTotalTime(minutes: number): string {
-  if (minutes < 60) return `${minutes} min`;
-  const hrs = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return mins > 0 ? `${hrs}.${Math.round((mins / 60) * 10)} hrs` : `${hrs} hrs`;
-}
-
-// ── Transform API entries into UI modules ───────────────────────────────────
-function toModules(entries: LPEntry[]): Module[] {
-  return entries.map((e) => ({
-    id: e.module.id,
-    title: e.module.title,
-    description: e.module.description,
-    icon: moduleIcons[e.module.title] || BookOpen,
-    status: e.status,
-    progress: e.progress,
-    xp: e.xp,
-    totalTime: formatTotalTime(
-      e.lessons.reduce((sum, l) => sum + l.duration, 0),
-    ),
-    lessons: e.lessons.map((l) => ({
-      title: l.title,
-      duration: `${l.duration} min`,
-      type: l.type,
-    })),
-  }));
-}
-
-const typeIcons: Record<string, React.ElementType> = {
-  video: PlayCircle,
-  reading: BookOpen,
-  practice: Code,
-  quiz: FileText,
-};
-
-const typeColors: Record<string, string> = {
-  video: "text-blue-500 bg-blue-50",
-  reading: "text-purple-500 bg-purple-50",
-  practice: "text-green-500 bg-green-50",
-  quiz: "text-orange-500 bg-orange-50",
-};
-
-function ModuleCard({
-  module,
-  index,
-  totalModules,
-}: {
-  module: Module;
-  index: number;
-  totalModules: number;
-}) {
-  const [expanded, setExpanded] = useState(module.status === "in-progress");
-  const isLocked = module.status === "locked";
-
-  const statusIcon =
-    module.status === "completed" ? (
-      <CheckCircle2 className="w-6 h-6 text-green-500" />
-    ) : module.status === "in-progress" ? (
-      <PlayCircle className="w-6 h-6 text-blue-500" />
-    ) : module.status === "locked" ? (
-      <Lock className="w-5 h-5 text-gray-400" />
-    ) : (
-      <Circle className="w-6 h-6 text-gray-300" />
-    );
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.1 }}
-      className={`relative ${isLocked ? "opacity-60" : ""}`}
-    >
-      {/* Timeline connector */}
-      {index < totalModules - 1 && (
-        <div className="absolute left-[27px] top-[60px] bottom-[-20px] w-0.5 bg-gray-200 hidden md:block" />
-      )}
-
-      <div className="flex gap-4 md:gap-6">
-        {/* Timeline dot */}
-        <div className="hidden md:flex flex-col items-center shrink-0 pt-1">
-          <div className="w-[54px] h-[54px] rounded-full border-2 border-gray-200 bg-white flex items-center justify-center z-10">
-            {statusIcon}
-          </div>
-        </div>
-
-        {/* Card */}
-        <motion.div
-          whileHover={
-            isLocked ? {} : { y: -2, boxShadow: "0 8px 30px rgba(0,0,0,0.08)" }
-          }
-          className="flex-1 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden"
-        >
-          <button
-            onClick={() => !isLocked && setExpanded(!expanded)}
-            className={`w-full p-5 md:p-6 text-left ${isLocked ? "" : "cursor-pointer"}`}
-            disabled={isLocked}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-4 flex-1 min-w-0">
-                <div className="md:hidden shrink-0">{statusIcon}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <h3
-                      className="text-[#0F172A]"
-                      style={{ fontSize: "1.0625rem", fontWeight: 600 }}
-                    >
-                      {module.title}
-                    </h3>
-                    <StatusBadge status={module.status} />
-                  </div>
-                  <p
-                    className="text-gray-500 mb-3"
-                    style={{ fontSize: "0.8125rem", lineHeight: 1.5 }}
-                  >
-                    {module.description}
-                  </p>
-
-                  <div className="flex items-center gap-4 flex-wrap">
-                    <span
-                      className="flex items-center gap-1 text-gray-400"
-                      style={{ fontSize: "0.75rem" }}
-                    >
-                      <Clock className="w-3.5 h-3.5" /> {module.totalTime}
-                    </span>
-                    <span
-                      className="flex items-center gap-1 text-gray-400"
-                      style={{ fontSize: "0.75rem" }}
-                    >
-                      <BookOpen className="w-3.5 h-3.5" />{" "}
-                      {module.lessons.length} lessons
-                    </span>
-                    <span
-                      className="flex items-center gap-1 text-yellow-500"
-                      style={{ fontSize: "0.75rem" }}
-                    >
-                      <Star className="w-3.5 h-3.5" /> {module.xp} XP
-                    </span>
-                  </div>
-
-                  {module.progress > 0 && (
-                    <div className="flex items-center gap-3 mt-3">
-                      <ProgressBar
-                        value={module.progress}
-                        color={
-                          module.status === "completed"
-                            ? "bg-green-500"
-                            : "bg-blue-500"
-                        }
-                      />
-                      <span
-                        className="text-gray-500 shrink-0"
-                        style={{ fontSize: "0.75rem", fontWeight: 500 }}
-                      >
-                        {module.progress}%
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {!isLocked && (
-                <div className="shrink-0 text-gray-400">
-                  {expanded ? (
-                    <ChevronUp className="w-5 h-5" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5" />
-                  )}
-                </div>
-              )}
-            </div>
-          </button>
-
-          {/* Expanded lessons */}
-          {expanded && !isLocked && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              transition={{ duration: 0.3 }}
-              className="border-t border-gray-100"
-            >
-              <div className="p-5 md:p-6 pt-4 space-y-2">
-                {module.lessons.map((lesson, li) => {
-                  const TypeIcon = typeIcons[lesson.type];
-                  const colorClass = typeColors[lesson.type];
-                  const isCompleted =
-                    module.status === "completed" ||
-                    (module.status === "in-progress" &&
-                      li <
-                        Math.floor(
-                          (module.progress / 100) * module.lessons.length,
-                        ));
-
-                  return (
-                    <motion.div
-                      key={lesson.title}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: li * 0.04 }}
-                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group"
-                    >
-                      <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${colorClass}`}
-                      >
-                        <TypeIcon className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className={`truncate ${isCompleted ? "text-gray-400 line-through" : "text-[#0F172A]"}`}
-                          style={{ fontSize: "0.8125rem", fontWeight: 500 }}
-                        >
-                          {lesson.title}
-                        </p>
-                      </div>
-                      <span
-                        className="text-gray-400 shrink-0"
-                        style={{ fontSize: "0.6875rem" }}
-                      >
-                        {lesson.duration}
-                      </span>
-                      {isCompleted && (
-                        <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-                      )}
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
-        </motion.div>
-      </div>
-    </motion.div>
-  );
-}
+// ─── Main Page Component ────────────────────────────────────────────────────
 
 export function LearningPathPage() {
-  // ── Fetch learning path from GET /api/learning-path ──
-  // The backend returns modules with lessons, progress, and status.
-  // React Basics is locked on the server until JS progress >= 70%.
-  const [modules, setModules] = useState<Module[]>([]);
+  const [pathData, setPathData] = useState<SkillPath | null>(null);
+  const [learningGoal, setLearningGoal] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchLearningPath() {
+    async function fetchAll() {
       setLoading(true);
-      const res = await getLearningPath();
-      if (res.success) {
-        setModules(toModules(res.data));
-        setError(null);
-      } else {
-        setError(res.message);
+      setError(null);
+
+      // 1. Get user profile to determine learning goal
+      const profileRes = await getProfile();
+      if (!profileRes.success) {
+        setError("Failed to load your profile");
+        setLoading(false);
+        return;
       }
+
+      const goal = profileRes.data.learning_goal;
+      if (!goal) {
+        setError("No learning goal set. Please complete onboarding first.");
+        setLoading(false);
+        return;
+      }
+
+      setLearningGoal(goal);
+
+      // 2. Fetch the learning path for this goal
+      const pathRes = await getSkillPath(goal);
+      if (pathRes.success) {
+        setPathData(pathRes.data);
+      } else {
+        setError(pathRes.message);
+      }
+
       setLoading(false);
     }
-    fetchLearningPath();
+
+    fetchAll();
   }, []);
 
-  // ── Compute header summary dynamically ──
-  const totalProgress = Math.round(
-    modules.reduce((sum, m) => sum + m.progress, 0) / modules.length,
-  );
-  const totalXp = modules.reduce((sum, m) => sum + m.xp, 0).toLocaleString();
-
   return (
-    <div className="space-y-8">
-      {/* Header stats — values computed from API data */}
+    <div className="space-y-8 max-w-3xl mx-auto">
+      {/* ── Hero header ── */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 md:p-8 text-white"
+        className="relative overflow-hidden rounded-2xl"
       >
-        <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }} className="mb-1">
-          Frontend Developer Path
-        </h2>
-        {loading ? (
-          <Skeleton className="w-60 h-5 mb-5 bg-white/20" />
-        ) : (
-          <p className="text-indigo-200 mb-5" style={{ fontSize: "0.875rem" }}>
-            {modules.length} modules &middot; {totalXp} XP total
-          </p>
-        )}
-        <div className="flex items-center gap-3">
-          <div className="flex-1 bg-white/20 rounded-full h-3 overflow-hidden">
-            <motion.div
-              className="h-full bg-white rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${totalProgress}%` }}
-              transition={{ duration: 1, ease: "easeOut" }}
-            />
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-fuchsia-600" />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zz4=')] opacity-60" />
+
+        <div className="relative p-6 md:p-8">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="w-4 h-4 text-amber-300" />
+                <span className="text-indigo-200 font-medium text-xs uppercase tracking-wider">
+                  Your Learning Roadmap
+                </span>
+              </div>
+              <h1
+                className="text-white font-bold mb-1.5"
+                style={{ fontSize: "1.5rem", lineHeight: 1.3 }}
+              >
+                {loading ? (
+                  <Skeleton className="w-64 h-8 bg-white/20" />
+                ) : (
+                  learningGoal || "Learning Path"
+                )}
+              </h1>
+              <p className="text-indigo-200 text-sm max-w-md">
+                Follow each phase in order to master your chosen skill.
+              </p>
+            </div>
+
+            {/* Duration badge */}
+            {!loading && pathData && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 200, delay: 0.3 }}
+                className="shrink-0"
+              >
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
+                  <Clock className="w-4 h-4 text-amber-300" />
+                  <span className="text-white font-semibold text-sm">
+                    {pathData.duration}
+                  </span>
+                </div>
+              </motion.div>
+            )}
           </div>
-          <span style={{ fontSize: "0.875rem", fontWeight: 700 }}>
-            {totalProgress}%
-          </span>
+
+          {/* Stats row */}
+          {!loading && pathData && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="flex items-center gap-4 mt-5 pt-5 border-t border-white/10"
+            >
+              <div className="flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5 text-indigo-300" />
+                <span className="text-white/80 text-xs font-medium">
+                  {pathData.phases.length} Phases
+                </span>
+              </div>
+              <div className="w-px h-3 bg-white/20" />
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-indigo-300" />
+                <span className="text-white/80 text-xs font-medium">
+                  {pathData.duration}
+                </span>
+              </div>
+              <div className="w-px h-3 bg-white/20" />
+              <div className="flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5 text-indigo-300" />
+                <span className="text-white/80 text-xs font-medium">
+                  Skill-based path
+                </span>
+              </div>
+            </motion.div>
+          )}
         </div>
       </motion.div>
 
-      {/* Error state */}
+      {/* ── Error state ── */}
       {error && !loading && (
-        <div className="text-center py-6 text-red-500">
-          <p>{error}</p>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center py-12 px-6 bg-white rounded-2xl border border-gray-100 shadow-sm"
+        >
+          <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-4">
+            <Target className="w-7 h-7 text-red-400" />
+          </div>
+          <p className="text-gray-600 font-medium mb-1">{error}</p>
+          <p className="text-gray-400 text-sm mb-4">
+            Make sure you've completed onboarding and selected a learning goal.
+          </p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-2 text-indigo-600 hover:underline cursor-pointer"
-            style={{ fontSize: "0.875rem" }}
+            className="text-indigo-600 hover:text-indigo-700 font-medium text-sm hover:underline cursor-pointer transition-colors"
           >
             Try again
           </button>
-        </div>
+        </motion.div>
       )}
 
-      {/* Loading state */}
+      {/* ── Loading state ── */}
       {loading && (
-        <div className="space-y-6">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-36 rounded-xl" />
+        <div className="space-y-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div
+              key={i}
+              className="rounded-2xl border border-gray-100 bg-white p-6"
+            >
+              <div className="flex items-center gap-4">
+                <Skeleton className="w-11 h-11 rounded-xl" />
+                <div className="flex-1">
+                  <Skeleton className="w-48 h-5 mb-2" />
+                  <Skeleton className="w-24 h-3" />
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       )}
 
-      {/* Module timeline — dynamic status/progress from API */}
-      {!loading && (
-        <div className="space-y-6">
-          {modules.map((module, index) => (
-            <ModuleCard
-              key={module.id}
-              module={module}
-              index={index}
-              totalModules={modules.length}
-            />
-          ))}
+      {/* ── Phases roadmap ── */}
+      {!loading && !error && pathData && (
+        <div className="relative pl-8">
+          {/* Vertical timeline line */}
+          <div className="absolute left-0 top-6 bottom-6 w-0.5 bg-gradient-to-b from-emerald-200 via-violet-200 to-amber-200 rounded-full" />
+
+          <div className="space-y-0">
+            {pathData.phases.map((phase, index) => {
+              const color = getPhaseColor(index);
+              const isLast = index === pathData.phases.length - 1;
+
+              return (
+                <div key={phase}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.45, delay: index * 0.1 }}
+                    className="relative"
+                  >
+                    {/* Timeline dot */}
+                    <div className="absolute -left-[2.125rem] top-6 z-10">
+                      <div
+                        className={`w-4 h-4 rounded-full ${color.dot} border-[3px] border-white shadow-lg`}
+                      />
+                    </div>
+
+                    {/* Phase card */}
+                    <div
+                      className={`rounded-2xl border ${color.border} bg-gradient-to-br from-white to-gray-50/30 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md`}
+                    >
+                      <div className="p-5 flex items-center gap-4">
+                        {/* Phase number */}
+                        <div
+                          className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br ${color.gradient} shadow-md`}
+                        >
+                          <span className="text-white font-bold text-sm">
+                            {index + 1}
+                          </span>
+                        </div>
+
+                        {/* Phase info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span
+                              className={`text-xs font-bold px-1.5 py-0.5 rounded ${color.bg} ${color.text}`}
+                            >
+                              Phase {index + 1}
+                            </span>
+                          </div>
+                          <h3
+                            className="font-semibold text-gray-800 mt-1"
+                            style={{ fontSize: "1.0625rem" }}
+                          >
+                            {phase}
+                          </h3>
+                        </div>
+
+                        <ChevronRight
+                          className={`w-5 h-5 ${color.text} opacity-40`}
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Connector between phases */}
+                  {!isLast && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.4, delay: index * 0.1 + 0.2 }}
+                      className="flex flex-col items-center py-3 relative -left-[0.125rem]"
+                    >
+                      <div
+                        className={`w-0.5 h-6 rounded-full bg-gradient-to-b ${color.line}`}
+                      />
+                    </motion.div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
+      )}
+
+      {/* ── Completion note ── */}
+      {!loading && !error && pathData && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: pathData.phases.length * 0.1 + 0.3 }}
+          className="text-center py-8 px-6 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-200"
+        >
+          <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-3" />
+          <h3 className="text-lg font-bold text-gray-800 mb-1">
+            Complete all {pathData.phases.length} phases
+          </h3>
+          <p className="text-gray-500 text-sm max-w-sm mx-auto">
+            Follow each phase sequentially to build a solid foundation in{" "}
+            {pathData.skill}. Estimated duration: {pathData.duration}.
+          </p>
+        </motion.div>
       )}
     </div>
   );

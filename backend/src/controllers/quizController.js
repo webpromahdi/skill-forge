@@ -8,6 +8,7 @@
 //   4. Backend scores answers, stores result in quiz_results, returns score
 //   5. Frontend displays result with score + XP earned
 
+import { z } from "zod";
 import {
   getAllQuizzes,
   getQuizById,
@@ -16,6 +17,23 @@ import {
   saveResult,
 } from "../services/quizService.js";
 import { calculateScore } from "../utils/scoreCalculator.js";
+
+// ─── Validation Schemas ─────────────────────────────────────────────────────
+
+// Schema for POST /api/quizzes/submit
+const submitQuizSchema = z.object({
+  quizId: z.string({ required_error: "quizId is required" }).min(1),
+  answers: z
+    .array(
+      z.object({
+        questionId: z.string({ required_error: "questionId is required" }),
+        selectedOption: z.string({
+          required_error: "selectedOption is required",
+        }),
+      }),
+    )
+    .min(1, "At least one answer is required"),
+});
 
 // ─── listQuizzes ────────────────────────────────────────────────────────────
 // GET /api/quizzes
@@ -80,15 +98,23 @@ export const getQuiz = async (req, res) => {
 export const submitQuiz = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { quizId, answers } = req.body;
 
-    // ── Validate input ───────────────────────────────────────────────
-    if (!quizId || !answers || !Array.isArray(answers)) {
+    // ── Validate input with Zod ──────────────────────────────────────
+    const parsed = submitQuizSchema.safeParse(req.body);
+    if (!parsed.success) {
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      const errors = Object.entries(fieldErrors).map(([field, messages]) => ({
+        field,
+        message: messages[0],
+      }));
       return res.status(400).json({
         success: false,
-        message: "Missing required fields: quizId and answers[]",
+        message: "Validation error",
+        errors,
       });
     }
+
+    const { quizId, answers } = parsed.data;
 
     // ── 1. Retrieve correct answers from database ────────────────────
     const correctAnswers = await getCorrectAnswers(quizId);

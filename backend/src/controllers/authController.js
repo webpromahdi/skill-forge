@@ -44,9 +44,13 @@ export const registerUser = async (req, res) => {
     });
 
     if (error) {
+      // Log the real Supabase error server-side for debugging, but return
+      // a generic message to prevent user-enumeration attacks (e.g. the
+      // client should not learn whether an email is already registered).
+      console.error("[REGISTER SUPABASE ERROR]", error.message);
       return res.status(400).json({
         success: false,
-        message: error.message,
+        message: "Unable to register user",
       });
     }
 

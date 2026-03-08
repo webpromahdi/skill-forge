@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
+import { toast } from "sonner";
 import { DashboardCard } from "../components/ui/DashboardCard";
 import {
   User,
@@ -11,14 +12,25 @@ import {
   CalendarCheck,
   Save,
   Camera,
+  Phone,
+  Lightbulb,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import { getProfile, updateProfile } from "../../services/userService";
+import { LearningGoalAutocomplete } from "../components/ui/LearningGoalAutocomplete";
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+export function formatLearningTime(minutes: number): string {
+  if (minutes < 60) return `${minutes} min`;
+  const hours = minutes / 60;
+  return Number.isInteger(hours)
+    ? `${hours} hour${hours !== 1 ? "s" : ""}`
+    : `${hours} hours`;
+}
 
 export function SettingsPage() {
   // ── Load the authenticated user from AuthContext ──
-  // The form's initial values come from the logged-in user instead of
-  // being hardcoded.  An effect keeps them in sync if the user object
-  // loads asynchronously (e.g. after a page refresh).
   const { user } = useAuth();
 
   const [profile, setProfile] = useState({
@@ -26,7 +38,17 @@ export function SettingsPage() {
     email: user?.email || "",
   });
 
-  // ── Sync form state when the user object arrives or changes ──
+  // ── Extended profile fields loaded from the backend ──
+  const [extendedProfile, setExtendedProfile] = useState({
+    phone_number: "",
+    learning_goal: "",
+    daily_learning_time: 60,
+    motivation: "",
+  });
+
+  const [isSaving, setIsSaving] = useState(false);
+
+  // ── Sync auth data when user object arrives ──
   useEffect(() => {
     if (user) {
       setProfile({
@@ -35,6 +57,23 @@ export function SettingsPage() {
       });
     }
   }, [user]);
+
+  // ── Fetch backend profile on mount ──
+  useEffect(() => {
+    async function loadProfile() {
+      const res = await getProfile();
+      if (res.success) {
+        const d = res.data;
+        setExtendedProfile({
+          phone_number: d.phone_number || "",
+          learning_goal: d.learning_goal || "",
+          daily_learning_time: d.daily_learning_time ?? 60,
+          motivation: d.motivation || "",
+        });
+      }
+    }
+    loadProfile();
+  }, []);
 
   // ── Build initials from the user's name (dynamic) ──
   const displayName = profile.name || user?.email || "User";
@@ -45,10 +84,6 @@ export function SettingsPage() {
     .toUpperCase()
     .slice(0, 2);
 
-  const [preferences, setPreferences] = useState({
-    goal: "Frontend Developer",
-    dailyTime: "1 hour",
-  });
   const [notifications, setNotifications] = useState({
     lessonReminders: true,
     quizReminders: true,
@@ -56,27 +91,28 @@ export function SettingsPage() {
     newRecommendations: false,
     achievements: true,
   });
-  const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const res = await updateProfile({
+        phone_number: extendedProfile.phone_number,
+        learning_goal: extendedProfile.learning_goal,
+        daily_learning_time: extendedProfile.daily_learning_time,
+        motivation: extendedProfile.motivation,
+      });
+
+      if (res.success) {
+        toast.success("Profile saved successfully!");
+      } else {
+        toast.error(res.message || "Failed to save profile.");
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
-
-  const goalOptions = [
-    "Frontend Developer",
-    "Backend Developer",
-    "Full Stack Developer",
-    "Mobile Developer",
-    "Data Science",
-  ];
-  const timeOptions = [
-    "30 minutes",
-    "1 hour",
-    "1.5 hours",
-    "2 hours",
-    "3 hours",
-  ];
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
@@ -124,10 +160,8 @@ export function SettingsPage() {
                 id="settings-name"
                 type="text"
                 value={profile.name}
-                onChange={(e) =>
-                  setProfile({ ...profile, name: e.target.value })
-                }
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                readOnly
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed outline-none"
                 style={{ fontSize: "0.875rem" }}
               />
             </div>
@@ -143,10 +177,54 @@ export function SettingsPage() {
                 id="settings-email"
                 type="email"
                 value={profile.email}
+                readOnly
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed outline-none"
+                style={{ fontSize: "0.875rem" }}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="settings-phone"
+                className="flex items-center gap-1.5 text-[#0F172A] mb-1.5"
+                style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+              >
+                <Phone className="w-3.5 h-3.5 text-gray-400" /> Phone Number
+              </label>
+              <input
+                id="settings-phone"
+                type="tel"
+                value={extendedProfile.phone_number}
                 onChange={(e) =>
-                  setProfile({ ...profile, email: e.target.value })
+                  setExtendedProfile({
+                    ...extendedProfile,
+                    phone_number: e.target.value,
+                  })
                 }
+                placeholder="+1 555 000 0000"
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                style={{ fontSize: "0.875rem" }}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="settings-motivation"
+                className="flex items-center gap-1.5 text-[#0F172A] mb-1.5"
+                style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+              >
+                <Lightbulb className="w-3.5 h-3.5 text-gray-400" /> Motivation
+              </label>
+              <textarea
+                id="settings-motivation"
+                value={extendedProfile.motivation}
+                onChange={(e) =>
+                  setExtendedProfile({
+                    ...extendedProfile,
+                    motivation: e.target.value,
+                  })
+                }
+                rows={3}
+                placeholder="What drives you to keep learning?"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none"
                 style={{ fontSize: "0.875rem" }}
               />
             </div>
@@ -175,21 +253,13 @@ export function SettingsPage() {
             >
               <Target className="w-3.5 h-3.5 text-gray-400" /> Learning Goal
             </label>
-            <select
-              id="settings-goal"
-              value={preferences.goal}
-              onChange={(e) =>
-                setPreferences({ ...preferences, goal: e.target.value })
+            <LearningGoalAutocomplete
+              inputId="settings-goal"
+              value={extendedProfile.learning_goal}
+              onChange={(v) =>
+                setExtendedProfile({ ...extendedProfile, learning_goal: v })
               }
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all appearance-none cursor-pointer"
-              style={{ fontSize: "0.875rem" }}
-            >
-              {goalOptions.map((goal) => (
-                <option key={goal} value={goal}>
-                  {goal}
-                </option>
-              ))}
-            </select>
+            />
           </div>
           <div>
             <label
@@ -199,22 +269,39 @@ export function SettingsPage() {
             >
               <Clock className="w-3.5 h-3.5 text-gray-400" /> Daily Learning
               Time
+              {extendedProfile.daily_learning_time > 0 && (
+                <span
+                  className="ml-auto text-blue-600 font-normal"
+                  style={{ fontSize: "0.8125rem" }}
+                >
+                  {formatLearningTime(extendedProfile.daily_learning_time)}
+                </span>
+              )}
             </label>
-            <select
-              id="settings-time"
-              value={preferences.dailyTime}
-              onChange={(e) =>
-                setPreferences({ ...preferences, dailyTime: e.target.value })
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all appearance-none cursor-pointer"
-              style={{ fontSize: "0.875rem" }}
-            >
-              {timeOptions.map((time) => (
-                <option key={time} value={time}>
-                  {time}
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center gap-3">
+              <input
+                id="settings-time"
+                type="number"
+                min={1}
+                max={720}
+                value={extendedProfile.daily_learning_time}
+                onChange={(e) => {
+                  const v = Math.max(
+                    1,
+                    Math.min(720, parseInt(e.target.value) || 1),
+                  );
+                  setExtendedProfile({
+                    ...extendedProfile,
+                    daily_learning_time: v,
+                  });
+                }}
+                className="w-28 px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-center"
+                style={{ fontSize: "0.875rem" }}
+              />
+              <span className="text-gray-500" style={{ fontSize: "0.875rem" }}>
+                minutes per day
+              </span>
+            </div>
           </div>
         </div>
       </DashboardCard>
@@ -317,13 +404,12 @@ export function SettingsPage() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleSave}
-          className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-white transition-colors cursor-pointer ${
-            saved ? "bg-green-600" : "bg-blue-600 hover:bg-blue-700"
-          }`}
+          disabled={isSaving}
+          className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors cursor-pointer"
           style={{ fontSize: "0.875rem", fontWeight: 600 }}
         >
           <Save className="w-4 h-4" />
-          {saved ? "Saved!" : "Save Changes"}
+          {isSaving ? "Saving…" : "Save Changes"}
         </motion.button>
       </div>
     </div>

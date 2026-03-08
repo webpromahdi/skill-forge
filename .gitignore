@@ -98,3 +98,9 @@ vite.config.ts.timestamp-*
 # ===========================
 .vercel/
 .netlify/
+
+# ===========================
+# Database Migrations & Seeds
+# ===========================
+backend/src/database/migrations/
+backend/src/database/seeds/

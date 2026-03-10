@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ProgressBar } from "../components/ui/ProgressBar";
 import { Skeleton } from "../components/ui/Skeleton";
+import { Button } from "../components/ui/button";
 import {
   ClipboardCheck,
   Clock,
@@ -169,21 +170,21 @@ export function AssessmentsPage() {
     return (
       <div className="space-y-8">
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-teal-600 to-emerald-700 rounded-2xl p-6 md:p-8 text-white"
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <ClipboardCheck className="w-6 h-6" />
-            <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>
-              Assessments
-            </h2>
-          </div>
-          <p className="text-teal-100" style={{ fontSize: "0.875rem" }}>
-            Test your knowledge and earn XP. Quizzes adapt to your current
-            learning progress.
-          </p>
-        </motion.div>
+           initial={{ opacity: 0, y: 16 }}
+           animate={{ opacity: 1, y: 0 }}
+           className="bg-gradient-to-br from-teal-600 to-emerald-700 rounded-2xl p-6 md:p-8 text-white"
+         >
+           <div className="flex items-center gap-3 mb-2">
+             <ClipboardCheck className="w-6 h-6" />
+             <h2 className="text-xl font-bold">
+               Assessments
+             </h2>
+           </div>
+           <p className="text-teal-100 text-sm">
+             Test your knowledge and earn XP. Quizzes adapt to your current
+             learning progress.
+           </p>
+         </motion.div>
 
         {/* Loading state */}
         {listLoading && (
@@ -206,14 +207,14 @@ export function AssessmentsPage() {
         {/* Error state */}
         {listError && !listLoading && (
           <div className="text-center py-12">
-            <p className="text-red-500 mb-3">{listError}</p>
-            <button
+            <p className="text-destructive mb-3">{listError}</p>
+            <Button
+              variant="link"
               onClick={() => window.location.reload()}
-              className="text-teal-600 hover:underline cursor-pointer"
-              style={{ fontSize: "0.875rem" }}
+              className="text-teal-600 hover:underline cursor-pointer text-sm"
             >
               Try again
-            </button>
+            </Button>
           </div>
         )}
 
@@ -233,43 +234,30 @@ export function AssessmentsPage() {
                 className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col"
               >
                 <div className="flex items-start justify-between mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center">
-                    <ClipboardCheck className="w-5 h-5 text-teal-600" />
+                  <div className="w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-900 flex items-center justify-center">
+                    <ClipboardCheck className="w-5 h-5 text-teal-600 dark:text-teal-300" />
                   </div>
                   <span
-                    className={`px-2 py-0.5 rounded-full ${difficultyColors[quiz.difficulty] || ""}`}
-                    style={{ fontSize: "0.6875rem", fontWeight: 500 }}
+                    className={`px-2 py-0.5 rounded-full text-[0.6875rem] font-medium ${difficultyColors[quiz.difficulty] || ""}`}
                   >
                     {quiz.difficulty}
                   </span>
                 </div>
 
-                <h3
-                  className="text-[#0F172A] mb-1"
-                  style={{ fontSize: "1rem", fontWeight: 600 }}
-                >
+                <h3 className="text-foreground mb-1 text-base font-semibold">
                   {quiz.title}
                 </h3>
-                <p
-                  className="text-gray-500 mb-4 flex-1"
-                  style={{ fontSize: "0.8125rem", lineHeight: 1.5 }}
-                >
+                <p className="text-muted-foreground mb-4 flex-1 text-[0.8125rem] leading-relaxed">
                   {quiz.topic} &middot; {quiz.questions} questions
                 </p>
 
                 {quiz.bestScore !== null && (
                   <div className="mb-3">
                     <div className="flex items-center justify-between mb-1">
-                      <span
-                        className="text-gray-500"
-                        style={{ fontSize: "0.6875rem" }}
-                      >
+                      <span className="text-muted-foreground text-[0.6875rem]">
                         Best Score
                       </span>
-                      <span
-                        className="text-[#0F172A]"
-                        style={{ fontSize: "0.6875rem", fontWeight: 600 }}
-                      >
+                      <span className="text-foreground text-[0.6875rem] font-semibold">
                         {quiz.bestScore}%
                       </span>
                     </div>
@@ -282,30 +270,21 @@ export function AssessmentsPage() {
                   </div>
                 )}
 
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                <div className="flex items-center justify-between pt-4 border-t border-border">
                   <div className="flex items-center gap-3">
-                    <span
-                      className="flex items-center gap-1 text-gray-400"
-                      style={{ fontSize: "0.75rem" }}
-                    >
+                    <span className="flex items-center gap-1 text-muted-foreground text-xs">
                       <Clock className="w-3.5 h-3.5" /> {quiz.duration} min
                     </span>
-                    <span
-                      className="flex items-center gap-1 text-yellow-500"
-                      style={{ fontSize: "0.75rem" }}
-                    >
+                    <span className="flex items-center gap-1 text-yellow-500 text-xs">
                       <Zap className="w-3.5 h-3.5" /> {quiz.xp} XP
                     </span>
                   </div>
-                  <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
+                  <Button
                     onClick={() => startQuiz(quiz)}
-                    className="flex items-center gap-1 bg-teal-600 text-white px-3 py-1.5 rounded-lg cursor-pointer"
-                    style={{ fontSize: "0.8125rem", fontWeight: 600 }}
+                    className="flex items-center gap-1 bg-teal-600 text-white hover:bg-teal-700 text-[0.8125rem] font-semibold"
                   >
                     <Play className="w-3.5 h-3.5" /> Start
-                  </motion.button>
+                  </Button>
                 </div>
               </motion.div>
             ))}
@@ -338,26 +317,20 @@ export function AssessmentsPage() {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <button
+          <Button
+            variant="ghost"
             onClick={() => setView("list")}
-            className="flex items-center gap-1 text-gray-500 hover:text-gray-700 mb-4 cursor-pointer"
-            style={{ fontSize: "0.8125rem" }}
+            className="flex items-center gap-1 text-muted-foreground hover:text-foreground mb-4 pr-4 pl-0"
           >
             <ArrowLeft className="w-4 h-4" /> Back to quizzes
-          </button>
+          </Button>
 
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 md:p-8">
+          <div className="bg-card rounded-xl border border-border shadow-sm p-6 md:p-8 w-full max-w-full">
             <div className="flex items-center justify-between mb-6">
-              <h3
-                className="text-[#0F172A]"
-                style={{ fontSize: "1.125rem", fontWeight: 600 }}
-              >
+              <h3 className="text-foreground text-lg font-semibold">
                 {activeQuiz?.title}
               </h3>
-              <span
-                className="bg-teal-100 text-teal-700 px-2.5 py-0.5 rounded-full"
-                style={{ fontSize: "0.75rem", fontWeight: 600 }}
-              >
+              <span className="bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 px-2.5 py-0.5 rounded-full text-xs font-semibold">
                 {currentQuestion + 1} / {questions.length}
               </span>
             </div>
@@ -377,10 +350,7 @@ export function AssessmentsPage() {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.25 }}
               >
-                <p
-                  className="text-[#0F172A] mb-6"
-                  style={{ fontSize: "1.0625rem", fontWeight: 500 }}
-                >
+                <p className="text-foreground mb-6 text-base font-medium">
                   {question.question}
                 </p>
 
@@ -391,29 +361,27 @@ export function AssessmentsPage() {
                       whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.99 }}
                       onClick={() => setSelectedOption(oi)}
-                      className={`w-full text-left p-4 rounded-lg border-2 transition-colors cursor-pointer ${
+                      className={`w-full text-left p-4 rounded-lg border-2 transition-colors cursor-pointer text-[0.9375rem] ${
                         selectedOption === oi
-                          ? "border-teal-500 bg-teal-50"
-                          : "border-gray-100 hover:border-gray-200 hover:bg-gray-50"
+                          ? "border-teal-500 bg-teal-50 dark:bg-teal-950"
+                          : "border-border hover:border-primary/50 hover:bg-muted"
                       }`}
-                      style={{ fontSize: "0.9375rem" }}
                     >
                       <div className="flex items-center gap-3">
                         <span
-                          className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
+                          className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-semibold ${
                             selectedOption === oi
                               ? "bg-teal-600 text-white"
-                              : "bg-gray-100 text-gray-500"
+                              : "bg-muted text-muted-foreground"
                           }`}
-                          style={{ fontSize: "0.75rem", fontWeight: 600 }}
                         >
                           {OPTION_LETTERS[oi]}
                         </span>
                         <span
                           className={
                             selectedOption === oi
-                              ? "text-teal-700"
-                              : "text-gray-700"
+                              ? "text-teal-800 dark:text-teal-200"
+                              : "text-foreground"
                           }
                         >
                           {option}
@@ -425,24 +393,19 @@ export function AssessmentsPage() {
               </motion.div>
             </AnimatePresence>
 
-            <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+            <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
+              <Button
+                variant="outline"
                 onClick={handlePrev}
                 disabled={currentQuestion === 0}
-                className="flex items-center gap-1 px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                style={{ fontSize: "0.875rem", fontWeight: 500 }}
+                className="flex items-center gap-1 px-4 py-2"
               >
                 <ArrowLeft className="w-4 h-4" /> Previous
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              </Button>
+              <Button
                 onClick={handleNext}
                 disabled={selectedOption === null || submitting}
-                className="flex items-center gap-1 bg-teal-600 text-white px-5 py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                style={{ fontSize: "0.875rem", fontWeight: 600 }}
+                className="flex items-center gap-1 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2"
               >
                 {submitting ? (
                   <>
@@ -454,7 +417,7 @@ export function AssessmentsPage() {
                   "Next"
                 )}
                 {!submitting && <ArrowRight className="w-4 h-4" />}
-              </motion.button>
+              </Button>
             </div>
           </div>
         </motion.div>
@@ -475,15 +438,15 @@ export function AssessmentsPage() {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center"
+        className="bg-card rounded-2xl border border-border shadow-sm p-8 text-center"
       >
         <div
           className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5 ${
             scorePercent >= 80
-              ? "bg-green-100"
+              ? "bg-green-100 dark:bg-green-900"
               : scorePercent >= 50
-                ? "bg-yellow-100"
-                : "bg-red-100"
+                ? "bg-yellow-100 dark:bg-yellow-900"
+                : "bg-red-100 dark:bg-red-900"
           }`}
         >
           {scorePercent >= 80 ? (
@@ -495,71 +458,55 @@ export function AssessmentsPage() {
           )}
         </div>
 
-        <h2
-          className="text-[#0F172A] mb-1"
-          style={{ fontSize: "1.5rem", fontWeight: 700 }}
-        >
+        <h2 className="text-foreground mb-1 text-2xl font-bold">
           {scorePercent >= 80
             ? "Excellent!"
             : scorePercent >= 50
               ? "Good Effort!"
               : "Keep Practicing!"}
         </h2>
-        <p className="text-gray-500 mb-6" style={{ fontSize: "0.875rem" }}>
+        <p className="text-muted-foreground mb-6 text-sm">
           {activeQuiz?.title} completed
         </p>
 
         <div className="flex items-center justify-center gap-8 mb-8">
           <div>
-            <p
-              className="text-[#0F172A]"
-              style={{ fontSize: "2rem", fontWeight: 700 }}
-            >
+            <p className="text-foreground text-3xl font-bold">
               {scorePercent}%
             </p>
-            <p className="text-gray-500" style={{ fontSize: "0.75rem" }}>
+            <p className="text-muted-foreground text-xs">
               Score
             </p>
           </div>
-          <div className="w-px h-12 bg-gray-200" />
+          <div className="w-px h-12 bg-border" />
           <div>
-            <p
-              className="text-[#0F172A]"
-              style={{ fontSize: "2rem", fontWeight: 700 }}
-            >
+            <p className="text-foreground text-3xl font-bold">
               {score}/{totalQ}
             </p>
-            <p className="text-gray-500" style={{ fontSize: "0.75rem" }}>
+            <p className="text-muted-foreground text-xs">
               Correct
             </p>
           </div>
-          <div className="w-px h-12 bg-gray-200" />
+          <div className="w-px h-12 bg-border" />
           <div>
-            <p
-              className="text-yellow-600"
-              style={{ fontSize: "2rem", fontWeight: 700 }}
-            >
+            <p className="text-yellow-600 text-3xl font-bold">
               +{xpEarned}
             </p>
-            <p className="text-gray-500" style={{ fontSize: "0.75rem" }}>
+            <p className="text-muted-foreground text-xs">
               XP Earned
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3 justify-center">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <Button
+            variant="outline"
             onClick={() => activeQuiz && startQuiz(activeQuiz)}
-            className="flex items-center gap-2 px-5 py-2.5 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 cursor-pointer"
-            style={{ fontSize: "0.875rem", fontWeight: 500 }}
+            className="flex items-center gap-2 px-5 py-2.5"
           >
             <RotateCcw className="w-4 h-4" /> Retry
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          </Button>
+          <Button
             onClick={() => {
               setView("list");
               // Refresh the quiz list to get updated best scores
@@ -567,11 +514,10 @@ export function AssessmentsPage() {
                 if (res.success) setQuizList(res.data);
               });
             }}
-            className="flex items-center gap-2 bg-teal-600 text-white px-5 py-2.5 rounded-lg cursor-pointer"
-            style={{ fontSize: "0.875rem", fontWeight: 600 }}
+            className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5"
           >
             Back to Quizzes <ArrowRight className="w-4 h-4" />
-          </motion.button>
+          </Button>
         </div>
       </motion.div>
     </div>

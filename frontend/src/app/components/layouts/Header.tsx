@@ -24,38 +24,37 @@ export function Header({ title, onMenuClick }: HeaderProps) {
     .slice(0, 2);
 
   return (
-    <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-gray-100">
-      <div className="flex items-center justify-between px-4 md:px-8 py-4">
+    <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border h-[69px]">
+      <div className="flex items-center justify-between px-4 md:px-8 h-full">
         <div className="flex items-center gap-4">
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+            className="lg:hidden p-2 rounded-lg hover:bg-accent transition-colors cursor-pointer text-foreground"
             aria-label="Toggle menu"
           >
-            <Menu className="w-5 h-5 text-gray-600" />
+            <Menu className="w-5 h-5" />
           </button>
-          <h1 className="text-[#0F172A]">{title}</h1>
+          <h1 className="text-foreground font-semibold">{title}</h1>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-2 gap-2">
-            <Search className="w-4 h-4 text-gray-400" />
+          <div className="hidden md:flex items-center bg-muted rounded-lg px-3 py-2 gap-2">
+            <Search className="w-4 h-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search..."
-              className="bg-transparent outline-none w-48"
-              style={{ fontSize: "0.875rem" }}
+              className="bg-transparent outline-none w-48 text-foreground placeholder:text-muted-foreground text-sm"
             />
           </div>
 
           <div className="relative" ref={bellRef}>
             <button
               onClick={() => setNotifOpen(!notifOpen)}
-              className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+              className="relative p-2 rounded-lg hover:bg-accent transition-colors cursor-pointer text-foreground"
               aria-label="Notifications"
             >
-              <Bell className="w-5 h-5 text-gray-600" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full" />
             </button>
             <NotificationPanel
               isOpen={notifOpen}
@@ -64,22 +63,16 @@ export function Header({ title, onMenuClick }: HeaderProps) {
           </div>
 
           {/* ── Dynamic user info pulled from AuthContext ── */}
-          <div className="flex items-center gap-3 pl-3 border-l border-gray-200">
+          <div className="flex items-center gap-3 pl-3 border-l border-border">
             <div className="hidden sm:block text-right">
-              <p
-                style={{ fontSize: "0.875rem", fontWeight: 600 }}
-                className="text-[#0F172A]"
-              >
+              <p className="text-foreground text-sm font-semibold">
                 {displayName}
               </p>
-              <p style={{ fontSize: "0.75rem" }} className="text-gray-500">
+              <p className="text-muted-foreground text-xs">
                 {user?.email}
               </p>
             </div>
-            <div
-              className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white"
-              style={{ fontSize: "0.75rem", fontWeight: 600 }}
-            >
+            <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-semibold">
               {initials}
             </div>
           </div>

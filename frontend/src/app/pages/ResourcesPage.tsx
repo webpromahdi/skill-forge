@@ -9,6 +9,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { Skeleton } from "../components/ui/Skeleton";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
 import {
   Search,
   Filter,
@@ -103,11 +105,11 @@ export function ResourcesPage() {
       >
         <div className="flex items-center gap-3 mb-2">
           <BookOpen className="w-6 h-6" />
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>
+          <h2 className="text-xl font-bold">
             Resource Library
           </h2>
         </div>
-        <p className="text-rose-100" style={{ fontSize: "0.875rem" }}>
+        <p className="text-rose-100 text-sm">
           Curated learning materials to support your learning journey. Browse
           videos, articles, projects, and tutorials.
         </p>
@@ -115,33 +117,31 @@ export function ResourcesPage() {
 
       {/* Search + Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex items-center bg-white border border-gray-200 rounded-lg px-3 py-2.5 gap-2 flex-1">
-          <Search className="w-4 h-4 text-gray-400 shrink-0" />
-          <input
+        <div className="flex items-center bg-card border border-border rounded-lg px-3 gap-2 flex-1 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+          <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+          <Input
             type="text"
             placeholder="Search resources by title or topic..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-transparent outline-none w-full"
-            style={{ fontSize: "0.875rem" }}
+            className="w-full border-none shadow-none focus-visible:ring-0 bg-transparent px-0 text-sm"
           />
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {typeFilters.map((filter) => (
-            <motion.button
+            <Button
               key={filter.value}
-              whileTap={{ scale: 0.96 }}
+              variant={activeType === filter.value ? "default" : "outline"}
               onClick={() => setActiveType(filter.value)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors cursor-pointer ${
-                activeType === filter.value
-                  ? "bg-[#0F172A] text-white"
-                  : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+              className={`flex items-center gap-1.5 px-3 py-2 text-[0.8125rem] font-medium ${
+                activeType !== filter.value
+                  ? "bg-card text-muted-foreground hover:bg-muted"
+                  : ""
               }`}
-              style={{ fontSize: "0.8125rem", fontWeight: 500 }}
             >
               <filter.icon className="w-3.5 h-3.5" />
               {filter.label}
-            </motion.button>
+            </Button>
           ))}
         </div>
       </div>
@@ -175,21 +175,21 @@ export function ResourcesPage() {
       {/* Error state */}
       {error && !loading && (
         <div className="text-center py-12">
-          <p className="text-red-500 mb-3">{error}</p>
-          <button
+          <p className="text-destructive mb-3">{error}</p>
+          <Button
+            variant="link"
             onClick={() => window.location.reload()}
-            className="text-rose-600 hover:underline cursor-pointer"
-            style={{ fontSize: "0.875rem" }}
+            className="text-rose-600 hover:text-rose-700 p-0 h-auto text-sm"
           >
             Try again
-          </button>
+          </Button>
         </div>
       )}
 
       {/* Results count + resource grid */}
       {!loading && !error && (
         <>
-          <p className="text-gray-500" style={{ fontSize: "0.8125rem" }}>
+          <p className="text-muted-foreground text-[0.8125rem]">
             Showing {filtered.length} resource{filtered.length !== 1 ? "s" : ""}
           </p>
 
@@ -210,7 +210,7 @@ export function ResourcesPage() {
                     y: -3,
                     boxShadow: "0 12px 40px rgba(0,0,0,0.08)",
                   }}
-                  className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col"
+                  className="bg-card rounded-xl border border-border shadow-sm p-5 flex flex-col"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div
@@ -220,60 +220,45 @@ export function ResourcesPage() {
                     </div>
                     <div className="flex items-center gap-1">
                       <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-                      <span
-                        className="text-gray-600"
-                        style={{ fontSize: "0.75rem", fontWeight: 600 }}
-                      >
+                      <span className="text-muted-foreground text-xs font-semibold">
                         {resource.rating}
                       </span>
                     </div>
                   </div>
 
-                  <h3
-                    className="text-[#0F172A] mb-1"
-                    style={{ fontSize: "1rem", fontWeight: 600 }}
-                  >
+                  <h3 className="text-foreground mb-1 text-base font-semibold">
                     {resource.title}
                   </h3>
-                  <p
-                    className="text-gray-400 mb-1"
-                    style={{ fontSize: "0.6875rem" }}
-                  >
+                  <p className="text-muted-foreground mb-1 text-[0.6875rem]">
                     by {resource.author}
                   </p>
                   <div className="mb-4 flex-1" />
 
                   <div className="flex items-center gap-2 flex-wrap mb-4">
                     <span
-                      className={`px-2 py-0.5 rounded-full ${difficultyColors[resource.difficulty] || ""}`}
-                      style={{ fontSize: "0.6875rem", fontWeight: 500 }}
+                      className={`px-2 py-0.5 rounded-full text-[0.6875rem] font-medium ${difficultyColors[resource.difficulty] || ""}`}
                     >
                       {resource.difficulty}
                     </span>
                     {tags.map((tag) => (
                       <span
                         key={tag}
-                        className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-500"
-                        style={{ fontSize: "0.6875rem" }}
+                        className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-[0.6875rem]"
                       >
                         {tag}
                       </span>
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <span
-                      className="flex items-center gap-1 text-gray-400"
-                      style={{ fontSize: "0.75rem" }}
-                    >
+                  <div className="flex items-center justify-between pt-4 border-t border-border">
+                    <span className="flex items-center gap-1 text-muted-foreground text-xs">
                       <Clock className="w-3.5 h-3.5" /> {resource.duration}
                     </span>
                     <a
                       href={resource.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-blue-600 hover:underline"
-                      style={{ fontSize: "0.8125rem", fontWeight: 600 }}
+                      className="flex items-center gap-1 text-primary hover:underline text-[0.8125rem] font-semibold"
                     >
                       Open <ExternalLink className="w-3.5 h-3.5" />
                     </a>
@@ -289,17 +274,11 @@ export function ResourcesPage() {
               animate={{ opacity: 1 }}
               className="text-center py-16"
             >
-              <Search className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p
-                className="text-gray-500"
-                style={{ fontSize: "0.9375rem", fontWeight: 500 }}
-              >
+              <Search className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-muted-foreground text-[0.9375rem] font-medium">
                 No resources found
               </p>
-              <p
-                className="text-gray-400 mt-1"
-                style={{ fontSize: "0.8125rem" }}
-              >
+              <p className="text-muted-foreground mt-1 text-[0.8125rem]">
                 Try adjusting your search or filters.
               </p>
             </motion.div>

@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Search } from "lucide-react";
 import { getGoals } from "../../../services/learningPathService";
+import { Input } from "./input";
 
 interface Props {
   value: string;
@@ -76,17 +77,16 @@ export function LearningGoalAutocomplete({
   return (
     <div ref={containerRef} className="relative">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-        <input
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+        <Input
           id={inputId}
           type="text"
           value={input}
-          onChange={handleInputChange}
+          onChange={handleInputChange as any}
           onFocus={() => input.trim().length > 0 && setOpen(true)}
           placeholder="e.g. Frontend Developer"
           autoComplete="off"
-          className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-          style={{ fontSize: "0.875rem" }}
+          className="w-full pl-9 pr-4"
         />
       </div>
 
@@ -97,7 +97,7 @@ export function LearningGoalAutocomplete({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.12 }}
-            className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg"
+            className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto rounded-lg border border-border bg-card shadow-lg"
             role="listbox"
           >
             {suggestions.map((s) => (
@@ -106,12 +106,11 @@ export function LearningGoalAutocomplete({
                 role="option"
                 aria-selected={s === value}
                 onMouseDown={() => handleSelect(s)}
-                className={`px-4 py-2.5 cursor-pointer transition-colors ${
+                className={`px-4 py-2.5 cursor-pointer transition-colors text-sm ${
                   s === value
-                    ? "bg-blue-50 text-blue-700 font-medium"
-                    : "text-gray-700 hover:bg-gray-50"
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-foreground hover:bg-muted"
                 }`}
-                style={{ fontSize: "0.875rem" }}
               >
                 {s}
               </li>

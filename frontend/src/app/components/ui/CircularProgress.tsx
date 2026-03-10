@@ -30,7 +30,7 @@ export function CircularProgress({
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="#F1F5F9"
+            className="stroke-muted"
             strokeWidth={strokeWidth}
           />
           <motion.circle
@@ -48,18 +48,18 @@ export function CircularProgress({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-[#0F172A]" style={{ fontSize: "1.25rem", fontWeight: 700 }}>
+          <span className="text-foreground text-xl font-bold">
             {value}%
           </span>
         </div>
       </div>
       {label && (
-        <p className="text-[#0F172A] mt-2 text-center" style={{ fontSize: "0.8125rem", fontWeight: 600 }}>
+        <p className="text-foreground mt-2 text-center text-[0.8125rem] font-semibold">
           {label}
         </p>
       )}
       {sublabel && (
-        <p className="text-gray-400 text-center" style={{ fontSize: "0.6875rem" }}>
+        <p className="text-muted-foreground text-center text-[0.6875rem]">
           {sublabel}
         </p>
       )}

@@ -18,7 +18,7 @@ export function DashboardCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay, ease: "easeOut" }}
       whileHover={{ y: -2, boxShadow: "0 8px 30px rgba(0,0,0,0.08)" }}
-      className={`bg-white rounded-xl border border-gray-100 shadow-sm p-6 ${className}`}
+      className={`bg-card rounded-xl border border-border shadow-sm p-4 md:p-6 ${className}`}
     >
       {children}
     </motion.div>

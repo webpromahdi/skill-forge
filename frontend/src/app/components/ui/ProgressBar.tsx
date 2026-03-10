@@ -16,7 +16,7 @@ export function ProgressBar({
   const percentage = Math.min((value / max) * 100, 100);
 
   return (
-    <div className={`w-full bg-gray-200 rounded-full h-2 overflow-hidden ${className}`}>
+    <div className={`w-full bg-secondary rounded-full h-2 overflow-hidden ${className}`}>
       <motion.div
         className={`h-full rounded-full ${color}`}
         initial={{ width: 0 }}

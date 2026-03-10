@@ -36,6 +36,7 @@ import {
   type Phase,
   type PhaseResource,
 } from "../../services/recommendationService";
+import { Button } from "../components/ui/button";
 
 // ─── Phase colours (matches LearningPathPage) ───────────────────────────────
 const PHASE_COLORS = [
@@ -166,7 +167,7 @@ export function RecommendationsPage() {
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-700 rounded-2xl p-6 md:p-8 text-white"
+        className="relative overflow-hidden bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-700 rounded-2xl p-6 md:p-8 text-white shadow-sm"
       >
         <div className="absolute top-0 right-0 w-72 h-72 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-4">
@@ -174,27 +175,21 @@ export function RecommendationsPage() {
             <Sparkles className="w-6 h-6 text-yellow-300" />
           </div>
           <div className="flex-1">
-            <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>
+            <h2 className="text-xl font-bold">
               {data
                 ? `Recommendations for ${data.skill}`
                 : "AI-Powered Recommendations"}
             </h2>
-            <p
-              className="text-purple-200 mt-1"
-              style={{ fontSize: "0.875rem" }}
-            >
+            <p className="text-purple-200 mt-1 text-sm">
               {data
                 ? `We found curated YouTube lessons and blog guides for each phase of your ${data.skill} learning path.`
                 : "Generate personalized learning resources — a YouTube lesson and a blog guide for every phase of your learning path."}
             </p>
           </div>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+          <Button
             onClick={handleGenerate}
             disabled={generating}
-            className="flex items-center gap-2 bg-white text-purple-700 px-5 py-2.5 rounded-lg shrink-0 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-            style={{ fontSize: "0.875rem", fontWeight: 600 }}
+            className="flex items-center gap-2 bg-white text-purple-700 hover:bg-white/90 px-5 py-5 rounded-lg shrink-0 text-sm font-semibold"
           >
             {generating ? (
               <>
@@ -212,7 +207,7 @@ export function RecommendationsPage() {
                   : "Generate Recommendations"}
               </>
             )}
-          </motion.button>
+          </Button>
         </div>
       </motion.div>
 
@@ -221,21 +216,20 @@ export function RecommendationsPage() {
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl"
+          className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-xl"
         >
-          <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
-          <p className="text-red-700 flex-1" style={{ fontSize: "0.875rem" }}>
+          <AlertTriangle className="w-5 h-5 text-destructive shrink-0" />
+          <p className="text-destructive flex-1 text-sm">
             {error}
           </p>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
+          <Button
+            variant="ghost"
             onClick={handleGenerate}
             disabled={generating}
-            className="flex items-center gap-1 text-red-600 cursor-pointer"
-            style={{ fontSize: "0.8125rem", fontWeight: 600 }}
+            className="flex items-center gap-1 text-destructive hover:text-destructive hover:bg-destructive/10 text-[0.8125rem] font-semibold"
           >
             <RefreshCw className="w-4 h-4" /> Retry
-          </motion.button>
+          </Button>
         </motion.div>
       )}
 
@@ -252,39 +246,30 @@ export function RecommendationsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: idx * 0.06 }}
-                className={`bg-white rounded-xl border ${color.border} shadow-sm overflow-hidden`}
+                className={`bg-card rounded-xl border ${color.border} shadow-sm overflow-hidden`}
               >
                 {/* Phase header */}
                 <button
                   type="button"
                   onClick={() => togglePhase(idx)}
-                  className="w-full flex items-center gap-4 p-5 text-left cursor-pointer hover:bg-gray-50/50 transition-colors"
+                  className="w-full flex items-center gap-4 p-5 text-left cursor-pointer hover:bg-accent/50 transition-colors"
                 >
-                  <div
-                    className={`w-10 h-10 rounded-xl bg-gradient-to-br ${color.gradient} flex items-center justify-center text-white shrink-0`}
-                    style={{ fontSize: "0.875rem", fontWeight: 700 }}
-                  >
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${color.gradient} flex items-center justify-center text-white shrink-0 text-sm font-bold`}>
                     {idx + 1}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3
-                      className="text-[#0F172A] truncate"
-                      style={{ fontSize: "1rem", fontWeight: 600 }}
-                    >
+                    <h3 className="text-foreground truncate text-base font-semibold">
                       {phase.title}
                     </h3>
-                    <p
-                      className="text-gray-400 mt-0.5"
-                      style={{ fontSize: "0.75rem" }}
-                    >
+                    <p className="text-muted-foreground mt-0.5 text-xs">
                       {phase.resources.length} resource
                       {phase.resources.length !== 1 ? "s" : ""}
                     </p>
                   </div>
                   {isOpen ? (
-                    <ChevronUp className="w-5 h-5 text-gray-400 shrink-0" />
+                    <ChevronUp className="w-5 h-5 text-muted-foreground shrink-0" />
                   ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-400 shrink-0" />
+                    <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
                   )}
                 </button>
 
@@ -310,7 +295,7 @@ export function RecommendationsPage() {
                                 y: -2,
                                 boxShadow: "0 8px 30px rgba(0,0,0,0.06)",
                               }}
-                              className={`rounded-lg border ${color.border} p-4 flex items-start gap-4`}
+                              className={`rounded-lg border ${color.border} p-4 flex items-start gap-4 bg-background`}
                             >
                               <div
                                 className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${style.bg}`}
@@ -318,28 +303,13 @@ export function RecommendationsPage() {
                                 <Icon className={`w-5 h-5 ${style.color}`} />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <span
-                                  className={`inline-block px-2 py-0.5 rounded-full ${style.bg} ${style.color} mb-1.5`}
-                                  style={{
-                                    fontSize: "0.6875rem",
-                                    fontWeight: 600,
-                                  }}
-                                >
+                                <span className={`inline-block px-2 py-0.5 rounded-full ${style.bg} ${style.color} mb-1.5 text-[0.6875rem] font-semibold`}>
                                   {style.label}
                                 </span>
-                                <h4
-                                  className="text-[#0F172A] leading-snug"
-                                  style={{
-                                    fontSize: "0.875rem",
-                                    fontWeight: 600,
-                                  }}
-                                >
+                                <h4 className="text-foreground leading-snug text-sm font-semibold">
                                   {resource.title}
                                 </h4>
-                                <p
-                                  className="text-gray-400 mt-0.5"
-                                  style={{ fontSize: "0.75rem" }}
-                                >
+                                <p className="text-muted-foreground mt-0.5 text-xs">
                                   {resource.source}
                                 </p>
                               </div>
@@ -347,11 +317,7 @@ export function RecommendationsPage() {
                                 href={resource.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-1 text-blue-600 hover:text-blue-700 shrink-0 mt-1"
-                                style={{
-                                  fontSize: "0.8125rem",
-                                  fontWeight: 600,
-                                }}
+                                className="flex items-center gap-1 text-primary hover:underline shrink-0 mt-1 text-[0.8125rem] font-semibold"
                               >
                                 Open
                                 <ExternalLink className="w-3.5 h-3.5" />
@@ -378,27 +344,18 @@ export function RecommendationsPage() {
             <div className="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center mb-4">
               <BookOpen className="w-8 h-8 text-purple-600" />
             </div>
-            <h3
-              className="text-[#0F172A] mb-2"
-              style={{ fontSize: "1.125rem", fontWeight: 600 }}
-            >
+            <h3 className="text-foreground mb-2 text-lg font-semibold">
               No Recommendations Yet
             </h3>
-            <p
-              className="text-gray-500 max-w-md mb-6"
-              style={{ fontSize: "0.875rem" }}
-            >
+            <p className="text-muted-foreground max-w-md mb-6 text-sm">
               Click the button above to generate AI-powered learning resources
               tailored to your goal. Each phase of your learning path will
               receive a curated YouTube lesson and a blog guide.
             </p>
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
+            <Button
               onClick={handleGenerate}
               disabled={generating}
-              className="flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-xl cursor-pointer disabled:opacity-60"
-              style={{ fontSize: "0.9375rem", fontWeight: 600 }}
+              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-6 rounded-xl font-semibold text-[0.9375rem]"
             >
               {generating ? (
                 <>
@@ -409,7 +366,7 @@ export function RecommendationsPage() {
                   <Zap className="w-5 h-5" /> Generate Recommendations
                 </>
               )}
-            </motion.button>
+            </Button>
           </motion.div>
         )
       )}

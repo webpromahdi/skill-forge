@@ -128,10 +128,7 @@ export function LearningPathPage() {
                   Your Learning Roadmap
                 </span>
               </div>
-              <h1
-                className="text-white font-bold mb-1.5"
-                style={{ fontSize: "1.5rem", lineHeight: 1.3 }}
-              >
+              <h1 className="text-white font-bold mb-1.5 text-2xl leading-[1.3]">
                 {loading ? (
                   <Skeleton className="w-64 h-8 bg-white/20" />
                 ) : (
@@ -199,18 +196,18 @@ export function LearningPathPage() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-center py-12 px-6 bg-white rounded-2xl border border-gray-100 shadow-sm"
+          className="text-center py-12 px-6 bg-card rounded-2xl border border-border shadow-sm"
         >
-          <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-4">
-            <Target className="w-7 h-7 text-red-400" />
+          <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+            <Target className="w-7 h-7 text-destructive" />
           </div>
-          <p className="text-gray-600 font-medium mb-1">{error}</p>
-          <p className="text-gray-400 text-sm mb-4">
+          <p className="text-foreground font-medium mb-1">{error}</p>
+          <p className="text-muted-foreground text-sm mb-4">
             Make sure you've completed onboarding and selected a learning goal.
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="text-indigo-600 hover:text-indigo-700 font-medium text-sm hover:underline cursor-pointer transition-colors"
+            className="text-primary hover:underline font-medium text-sm cursor-pointer transition-all"
           >
             Try again
           </button>
@@ -223,7 +220,7 @@ export function LearningPathPage() {
           {[1, 2, 3, 4, 5].map((i) => (
             <div
               key={i}
-              className="rounded-2xl border border-gray-100 bg-white p-6"
+              className="rounded-2xl border border-border bg-card p-6"
             >
               <div className="flex items-center gap-4">
                 <Skeleton className="w-11 h-11 rounded-xl" />
@@ -241,7 +238,7 @@ export function LearningPathPage() {
       {!loading && !error && pathData && (
         <div className="relative pl-8">
           {/* Vertical timeline line */}
-          <div className="absolute left-0 top-6 bottom-6 w-0.5 bg-gradient-to-b from-emerald-200 via-violet-200 to-amber-200 rounded-full" />
+          <div className="absolute left-0 top-6 bottom-6 w-0.5 bg-gradient-to-b from-emerald-200 via-violet-200 to-amber-200 rounded-full dark:opacity-40" />
 
           <div className="space-y-0">
             {pathData.phases.map((phase, index) => {
@@ -259,13 +256,13 @@ export function LearningPathPage() {
                     {/* Timeline dot */}
                     <div className="absolute -left-[2.125rem] top-6 z-10">
                       <div
-                        className={`w-4 h-4 rounded-full ${color.dot} border-[3px] border-white shadow-lg`}
+                        className={`w-4 h-4 rounded-full ${color.dot} border-[3px] border-background shadow-lg`}
                       />
                     </div>
 
                     {/* Phase card */}
                     <div
-                      className={`rounded-2xl border ${color.border} bg-gradient-to-br from-white to-gray-50/30 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md`}
+                      className={`rounded-2xl border ${color.border} bg-card shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md`}
                     >
                       <div className="p-5 flex items-center gap-4">
                         {/* Phase number */}
@@ -286,10 +283,7 @@ export function LearningPathPage() {
                               Phase {index + 1}
                             </span>
                           </div>
-                          <h3
-                            className="font-semibold text-gray-800 mt-1"
-                            style={{ fontSize: "1.0625rem" }}
-                          >
+                          <h3 className="font-semibold text-foreground mt-1 text-[1.0625rem]">
                             {phase}
                           </h3>
                         </div>
@@ -310,7 +304,7 @@ export function LearningPathPage() {
                       className="flex flex-col items-center py-3 relative -left-[0.125rem]"
                     >
                       <div
-                        className={`w-0.5 h-6 rounded-full bg-gradient-to-b ${color.line}`}
+                        className={`w-0.5 h-6 rounded-full bg-gradient-to-b ${color.line} dark:opacity-40`}
                       />
                     </motion.div>
                   )}
@@ -327,13 +321,13 @@ export function LearningPathPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: pathData.phases.length * 0.1 + 0.3 }}
-          className="text-center py-8 px-6 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-200"
+          className="text-center py-8 px-6 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-2xl border border-emerald-200 dark:border-emerald-800"
         >
           <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-3" />
-          <h3 className="text-lg font-bold text-gray-800 mb-1">
+          <h3 className="text-lg font-bold text-foreground mb-1">
             Complete all {pathData.phases.length} phases
           </h3>
-          <p className="text-gray-500 text-sm max-w-sm mx-auto">
+          <p className="text-muted-foreground text-sm max-w-sm mx-auto">
             Follow each phase sequentially to build a solid foundation in{" "}
             {pathData.skill}. Estimated duration: {pathData.duration}.
           </p>

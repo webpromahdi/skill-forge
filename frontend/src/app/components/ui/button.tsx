@@ -34,6 +34,8 @@ const buttonVariants = cva(
   },
 );
 
+import { motion } from "motion/react";
+
 function Button({
   className,
   variant,
@@ -46,11 +48,23 @@ function Button({
   }) {
   const Comp = asChild ? Slot : "button";
 
+  if (asChild) {
+    return (
+      <Comp
+        data-slot="button"
+        className={cn(buttonVariants({ variant, size, className }))}
+        {...props}
+      />
+    );
+  }
+
   return (
-    <Comp
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
+      {...(props as any)}
     />
   );
 }

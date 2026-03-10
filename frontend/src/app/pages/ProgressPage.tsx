@@ -186,7 +186,7 @@ export function ProgressPage() {
   return (
     <div className="space-y-8">
       {/* Stat cards — values from GET /api/progress */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
         {loading ? (
           <>
             <StatCardSkeleton />
@@ -250,26 +250,19 @@ export function ProgressPage() {
         <DashboardCard className="lg:col-span-2" delay={0.1}>
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h3
-                className="text-[#0F172A]"
-                style={{ fontSize: "1.0625rem", fontWeight: 600 }}
-              >
+              <h3 className="text-foreground text-base font-semibold">
                 Weekly Study Hours
               </h3>
-              <p
-                className="text-gray-400 mt-0.5"
-                style={{ fontSize: "0.75rem" }}
-              >
+              <p className="text-muted-foreground mt-0.5 text-xs">
                 Hours spent learning each day
               </p>
             </div>
             <div
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-full ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
                 weeklyTrend >= 0
-                  ? "text-green-600 bg-green-50"
-                  : "text-red-500 bg-red-50"
+                  ? "text-emerald-700 bg-emerald-100"
+                  : "text-destructive bg-destructive/10"
               }`}
-              style={{ fontSize: "0.75rem", fontWeight: 600 }}
             >
               <TrendingUp className="w-3.5 h-3.5" />{" "}
               {totalWeeklyHours > 0
@@ -312,13 +305,10 @@ export function ProgressPage() {
 
         {/* Activity breakdown pie */}
         <DashboardCard delay={0.15}>
-          <h3
-            className="text-[#0F172A] mb-1"
-            style={{ fontSize: "1.0625rem", fontWeight: 600 }}
-          >
+          <h3 className="text-foreground mb-1 text-base font-semibold">
             Activity Breakdown
           </h3>
-          <p className="text-gray-400 mb-4" style={{ fontSize: "0.75rem" }}>
+          <p className="text-muted-foreground mb-4 text-xs">
             How you spend your time
           </p>
           <div className="h-44 mb-4">
@@ -354,7 +344,7 @@ export function ProgressPage() {
                   className="w-2.5 h-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: item.color }}
                 />
-                <span className="text-gray-600" style={{ fontSize: "0.75rem" }}>
+                <span className="text-muted-foreground text-xs">
                   {item.name} ({item.value}%)
                 </span>
               </div>
@@ -367,13 +357,10 @@ export function ProgressPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Skill mastery */}
         <DashboardCard delay={0.2}>
-          <h3
-            className="text-[#0F172A] mb-1"
-            style={{ fontSize: "1.0625rem", fontWeight: 600 }}
-          >
+          <h3 className="text-foreground mb-1 text-base font-semibold">
             Skill Mastery
           </h3>
-          <p className="text-gray-400 mb-6" style={{ fontSize: "0.75rem" }}>
+          <p className="text-muted-foreground mb-6 text-xs">
             Your proficiency across core skills
           </p>
           <div className="flex items-center justify-center gap-6 flex-wrap">
@@ -395,25 +382,16 @@ export function ProgressPage() {
         <DashboardCard delay={0.25}>
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h3
-                className="text-[#0F172A]"
-                style={{ fontSize: "1.0625rem", fontWeight: 600 }}
-              >
+              <h3 className="text-foreground text-base font-semibold">
                 Monthly Progress
               </h3>
-              <p
-                className="text-gray-400 mt-0.5"
-                style={{ fontSize: "0.75rem" }}
-              >
+              <p className="text-muted-foreground mt-0.5 text-xs">
                 Lessons completed per week
               </p>
             </div>
-            <div
-              className="flex items-center gap-1"
-              style={{ fontSize: "0.75rem" }}
-            >
-              <Target className="w-3.5 h-3.5 text-blue-500" />
-              <span className="text-gray-500">Goal: 15/week</span>
+            <div className="flex items-center gap-1 text-xs">
+              <Target className="w-3.5 h-3.5 text-primary" />
+              <span className="text-muted-foreground">Goal: 15/week</span>
             </div>
           </div>
           <div className="h-52">
@@ -443,13 +421,10 @@ export function ProgressPage() {
 
       {/* Achievements */}
       <DashboardCard delay={0.3}>
-        <h3
-          className="text-[#0F172A] mb-1"
-          style={{ fontSize: "1.0625rem", fontWeight: 600 }}
-        >
+        <h3 className="text-foreground mb-1 text-base font-semibold">
           Achievements
         </h3>
-        <p className="text-gray-400 mb-5" style={{ fontSize: "0.75rem" }}>
+        <p className="text-muted-foreground mb-5 text-xs">
           Milestones on your learning journey
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -461,21 +436,15 @@ export function ProgressPage() {
               transition={{ delay: 0.35 + i * 0.05 }}
               className={`flex flex-col items-center text-center p-4 rounded-xl border ${
                 a.earned
-                  ? "border-yellow-200 bg-yellow-50/50"
-                  : "border-gray-100 bg-gray-50/50 opacity-50"
+                  ? "border-yellow-200/50 bg-yellow-50 focus:border-primary"
+                  : "border-border bg-card opacity-50"
               }`}
             >
-              <span style={{ fontSize: "1.5rem" }}>{a.icon}</span>
-              <p
-                className="text-[#0F172A] mt-2"
-                style={{ fontSize: "0.75rem", fontWeight: 600 }}
-              >
+              <span className="text-2xl">{a.icon}</span>
+              <p className="text-foreground mt-2 text-xs font-semibold">
                 {a.title}
               </p>
-              <p
-                className="text-gray-400 mt-0.5"
-                style={{ fontSize: "0.625rem" }}
-              >
+              <p className="text-muted-foreground mt-0.5 text-[0.625rem]">
                 {a.description}
               </p>
             </motion.div>

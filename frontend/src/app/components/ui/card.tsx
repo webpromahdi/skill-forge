@@ -2,12 +2,17 @@ import * as React from "react";
 
 import { cn } from "./utils";
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+import { motion, HTMLMotionProps } from "motion/react";
+
+function Card({ className, interactive = false, ...props }: HTMLMotionProps<"div"> & { interactive?: boolean }) {
   return (
-    <div
+    <motion.div
+      whileHover={interactive ? { scale: 1.02 } : undefined}
+      whileTap={interactive ? { scale: 0.98 } : undefined}
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border",
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border shadow-sm p-4 md:p-6 transition-colors",
+        interactive && "cursor-pointer hover:bg-accent/50",
         className,
       )}
       {...props}

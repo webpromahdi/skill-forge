@@ -4,6 +4,8 @@ import { useNavigate } from "react-router";
 import { GraduationCap, Eye, EyeOff } from "lucide-react";
 import { loginUser, type FieldError } from "../../services/authService";
 import { useAuth } from "../../contexts/AuthContext";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -46,10 +48,7 @@ export function LoginPage() {
   };
 
   return (
-    <div
-      className="min-h-screen bg-[#F8FAFC] flex items-center justify-center px-4"
-      style={{ fontFamily: "'Inter', sans-serif" }}
-    >
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 font-sans">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -58,39 +57,30 @@ export function LoginPage() {
       >
         <div className="text-center mb-8">
           <div
-            className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center mx-auto mb-4 cursor-pointer"
+            className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center mx-auto mb-4 cursor-pointer"
             onClick={() => navigate("/")}
           >
-            <GraduationCap className="w-6 h-6 text-white" />
+            <GraduationCap className="w-6 h-6 text-primary-foreground" />
           </div>
-          <h1
-            className="text-[#0F172A]"
-            style={{ fontSize: "1.5rem", fontWeight: 700 }}
-          >
+          <h1 className="text-foreground text-2xl font-bold">
             Welcome back
           </h1>
-          <p className="text-gray-500 mt-1" style={{ fontSize: "0.875rem" }}>
+          <p className="text-muted-foreground mt-1 text-sm">
             Sign in to continue your learning journey
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <div className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-8">
           {/* ── Display general or authentication errors ── */}
           {error && (
-            <div
-              className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700"
-              style={{ fontSize: "0.8125rem" }}
-            >
+            <div className="mb-4 p-3 text-[0.8125rem] rounded-lg bg-destructive/10 border border-destructive/20 text-destructive">
               {error}
             </div>
           )}
 
           {/* ── Display per-field validation errors from the backend ── */}
           {fieldErrors.length > 0 && (
-            <ul
-              className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 list-disc list-inside"
-              style={{ fontSize: "0.8125rem" }}
-            >
+            <ul className="mb-4 p-3 text-[0.8125rem] rounded-lg bg-destructive/10 border border-destructive/20 text-destructive list-disc list-inside">
               {fieldErrors.map((fe) => (
                 <li key={fe.field}>
                   <span className="font-medium capitalize">{fe.field}</span>:{" "}
@@ -104,44 +94,40 @@ export function LoginPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-[#0F172A] mb-1.5"
-                style={{ fontSize: "0.875rem", fontWeight: 500 }}
+                className="block text-foreground mb-1.5 text-sm font-medium"
               >
                 Email
               </label>
-              <input
+              <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="jane@example.com"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                style={{ fontSize: "0.875rem" }}
+                className="w-full"
               />
             </div>
 
             <div>
               <label
                 htmlFor="password"
-                className="block text-[#0F172A] mb-1.5"
-                style={{ fontSize: "0.875rem", fontWeight: 500 }}
+                className="block text-foreground mb-1.5 text-sm font-medium"
               >
                 Password
               </label>
               <div className="relative">
-                <input
+                <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all pr-11"
-                  style={{ fontSize: "0.875rem" }}
+                  className="w-full pr-11"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -152,27 +138,20 @@ export function LoginPage() {
               </div>
             </div>
 
-            <motion.button
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
+            <Button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ fontSize: "0.875rem", fontWeight: 600 }}
+              className="w-full rounded-lg text-sm font-semibold p-6"
             >
               {loading ? "Logging in…" : "Log in"}
-            </motion.button>
+            </Button>
           </form>
 
-          <p
-            className="text-center text-gray-500 mt-6"
-            style={{ fontSize: "0.8125rem" }}
-          >
+          <p className="text-center text-muted-foreground mt-6 text-[0.8125rem]">
             Don't have an account?{" "}
             <button
               onClick={() => navigate("/signup")}
-              className="text-blue-600 hover:underline cursor-pointer"
-              style={{ fontWeight: 500 }}
+              className="text-primary hover:underline cursor-pointer font-medium"
             >
               Sign up
             </button>

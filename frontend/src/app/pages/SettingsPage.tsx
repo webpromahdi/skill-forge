@@ -18,6 +18,8 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import { getProfile, updateProfile } from "../../services/userService";
 import { LearningGoalAutocomplete } from "../components/ui/LearningGoalAutocomplete";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -119,11 +121,8 @@ export function SettingsPage() {
       {/* Profile Section */}
       <DashboardCard delay={0}>
         <div className="flex items-center gap-2 mb-6">
-          <User className="w-5 h-5 text-gray-500" />
-          <h3
-            className="text-[#0F172A]"
-            style={{ fontSize: "1.125rem", fontWeight: 600 }}
-          >
+          <User className="w-5 h-5 text-muted-foreground" />
+          <h3 className="text-foreground text-lg font-semibold">
             Profile
           </h3>
         </div>
@@ -131,18 +130,15 @@ export function SettingsPage() {
         <div className="flex flex-col sm:flex-row gap-6 items-start">
           {/* Avatar */}
           <div className="relative shrink-0">
-            <div
-              className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-white"
-              style={{ fontSize: "1.5rem", fontWeight: 700 }}
-            >
+            <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-2xl font-bold">
               {/* Dynamic initials from authenticated user */}
               {initials}
             </div>
             <button
-              className="absolute bottom-0 right-0 w-7 h-7 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 cursor-pointer"
+              className="absolute bottom-0 right-0 w-7 h-7 bg-card border border-border rounded-full flex items-center justify-center shadow-sm hover:bg-accent cursor-pointer"
               aria-label="Change avatar"
             >
-              <Camera className="w-3.5 h-3.5 text-gray-600" />
+              <Camera className="w-3.5 h-3.5 text-muted-foreground" />
             </button>
           </div>
 
@@ -151,46 +147,41 @@ export function SettingsPage() {
             <div>
               <label
                 htmlFor="settings-name"
-                className="flex items-center gap-1.5 text-[#0F172A] mb-1.5"
-                style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+                className="flex items-center gap-1.5 text-foreground mb-1.5 text-[0.8125rem] font-medium"
               >
-                <User className="w-3.5 h-3.5 text-gray-400" /> Full Name
+                <User className="w-3.5 h-3.5 text-muted-foreground" /> Full Name
               </label>
-              <input
+              <Input
                 id="settings-name"
                 type="text"
                 value={profile.name}
                 readOnly
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed outline-none"
-                style={{ fontSize: "0.875rem" }}
+                className="w-full bg-muted text-muted-foreground cursor-not-allowed"
               />
             </div>
             <div>
               <label
                 htmlFor="settings-email"
-                className="flex items-center gap-1.5 text-[#0F172A] mb-1.5"
-                style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+                className="flex items-center gap-1.5 text-foreground mb-1.5 text-[0.8125rem] font-medium"
               >
-                <Mail className="w-3.5 h-3.5 text-gray-400" /> Email
+                <Mail className="w-3.5 h-3.5 text-muted-foreground" /> Email
               </label>
-              <input
+              <Input
                 id="settings-email"
                 type="email"
                 value={profile.email}
                 readOnly
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed outline-none"
-                style={{ fontSize: "0.875rem" }}
+                className="w-full bg-muted text-muted-foreground cursor-not-allowed"
               />
             </div>
             <div>
               <label
                 htmlFor="settings-phone"
-                className="flex items-center gap-1.5 text-[#0F172A] mb-1.5"
-                style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+                className="flex items-center gap-1.5 text-foreground mb-1.5 text-[0.8125rem] font-medium"
               >
-                <Phone className="w-3.5 h-3.5 text-gray-400" /> Phone Number
+                <Phone className="w-3.5 h-3.5 text-muted-foreground" /> Phone Number
               </label>
-              <input
+              <Input
                 id="settings-phone"
                 type="tel"
                 value={extendedProfile.phone_number}
@@ -201,17 +192,15 @@ export function SettingsPage() {
                   })
                 }
                 placeholder="+1 555 000 0000"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                style={{ fontSize: "0.875rem" }}
+                className="w-full"
               />
             </div>
             <div>
               <label
                 htmlFor="settings-motivation"
-                className="flex items-center gap-1.5 text-[#0F172A] mb-1.5"
-                style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+                className="flex items-center gap-1.5 text-foreground mb-1.5 text-[0.8125rem] font-medium"
               >
-                <Lightbulb className="w-3.5 h-3.5 text-gray-400" /> Motivation
+                <Lightbulb className="w-3.5 h-3.5 text-muted-foreground" /> Motivation
               </label>
               <textarea
                 id="settings-motivation"
@@ -224,8 +213,7 @@ export function SettingsPage() {
                 }
                 rows={3}
                 placeholder="What drives you to keep learning?"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none"
-                style={{ fontSize: "0.875rem" }}
+                className="w-full px-4 py-2.5 rounded-lg border border-border bg-card focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none text-sm"
               />
             </div>
           </div>
@@ -235,11 +223,8 @@ export function SettingsPage() {
       {/* Learning Preferences */}
       <DashboardCard delay={0.1}>
         <div className="flex items-center gap-2 mb-6">
-          <Target className="w-5 h-5 text-gray-500" />
-          <h3
-            className="text-[#0F172A]"
-            style={{ fontSize: "1.125rem", fontWeight: 600 }}
-          >
+          <Target className="w-5 h-5 text-muted-foreground" />
+          <h3 className="text-foreground text-lg font-semibold">
             Learning Preferences
           </h3>
         </div>
@@ -248,10 +233,9 @@ export function SettingsPage() {
           <div>
             <label
               htmlFor="settings-goal"
-              className="flex items-center gap-1.5 text-[#0F172A] mb-1.5"
-              style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+              className="flex items-center gap-1.5 text-foreground mb-1.5 text-[0.8125rem] font-medium"
             >
-              <Target className="w-3.5 h-3.5 text-gray-400" /> Learning Goal
+              <Target className="w-3.5 h-3.5 text-muted-foreground" /> Learning Goal
             </label>
             <LearningGoalAutocomplete
               inputId="settings-goal"
@@ -264,22 +248,18 @@ export function SettingsPage() {
           <div>
             <label
               htmlFor="settings-time"
-              className="flex items-center gap-1.5 text-[#0F172A] mb-1.5"
-              style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+              className="flex items-center gap-1.5 text-foreground mb-1.5 text-[0.8125rem] font-medium"
             >
-              <Clock className="w-3.5 h-3.5 text-gray-400" /> Daily Learning
+              <Clock className="w-3.5 h-3.5 text-muted-foreground" /> Daily Learning
               Time
               {extendedProfile.daily_learning_time > 0 && (
-                <span
-                  className="ml-auto text-blue-600 font-normal"
-                  style={{ fontSize: "0.8125rem" }}
-                >
+                <span className="ml-auto text-primary font-normal text-[0.8125rem]">
                   {formatLearningTime(extendedProfile.daily_learning_time)}
                 </span>
               )}
             </label>
             <div className="flex items-center gap-3">
-              <input
+              <Input
                 id="settings-time"
                 type="number"
                 min={1}
@@ -295,10 +275,9 @@ export function SettingsPage() {
                     daily_learning_time: v,
                   });
                 }}
-                className="w-28 px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-center"
-                style={{ fontSize: "0.875rem" }}
+                className="w-28 text-center"
               />
-              <span className="text-gray-500" style={{ fontSize: "0.875rem" }}>
+              <span className="text-muted-foreground text-sm">
                 minutes per day
               </span>
             </div>
@@ -309,11 +288,8 @@ export function SettingsPage() {
       {/* Notifications */}
       <DashboardCard delay={0.2}>
         <div className="flex items-center gap-2 mb-6">
-          <Bell className="w-5 h-5 text-gray-500" />
-          <h3
-            className="text-[#0F172A]"
-            style={{ fontSize: "1.125rem", fontWeight: 600 }}
-          >
+          <Bell className="w-5 h-5 text-muted-foreground" />
+          <h3 className="text-foreground text-lg font-semibold">
             Notifications
           </h3>
         </div>
@@ -353,20 +329,17 @@ export function SettingsPage() {
           ].map((item) => (
             <div
               key={item.key}
-              className="flex items-center justify-between gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-between gap-4 p-3 rounded-lg hover:bg-accent transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-                  <item.icon className="w-4 h-4 text-gray-500" />
+                <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                  <item.icon className="w-4 h-4 text-muted-foreground" />
                 </div>
                 <div>
-                  <p
-                    className="text-[#0F172A]"
-                    style={{ fontSize: "0.875rem", fontWeight: 500 }}
-                  >
+                  <p className="text-foreground text-[0.875rem] font-medium">
                     {item.label}
                   </p>
-                  <p className="text-gray-400" style={{ fontSize: "0.75rem" }}>
+                  <p className="text-muted-foreground text-xs">
                     {item.description}
                   </p>
                 </div>
@@ -379,14 +352,14 @@ export function SettingsPage() {
                   })
                 }
                 className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer shrink-0 ${
-                  notifications[item.key] ? "bg-blue-600" : "bg-gray-300"
+                  notifications[item.key] ? "bg-primary" : "bg-muted-foreground/30"
                 }`}
                 role="switch"
                 aria-checked={notifications[item.key]}
                 aria-label={item.label}
               >
                 <motion.div
-                  className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm"
+                  className="absolute top-0.5 w-5 h-5 rounded-full bg-white dark:bg-card shadow-sm"
                   animate={{
                     left: notifications[item.key] ? "calc(100% - 22px)" : "2px",
                   }}
@@ -400,17 +373,14 @@ export function SettingsPage() {
 
       {/* Save button */}
       <div className="flex justify-end">
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+        <Button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors cursor-pointer"
-          style={{ fontSize: "0.875rem", fontWeight: 600 }}
+          className="flex items-center gap-2 px-6 py-5 rounded-lg text-sm font-semibold"
         >
           <Save className="w-4 h-4" />
           {isSaving ? "Saving…" : "Save Changes"}
-        </motion.button>
+        </Button>
       </div>
     </div>
   );

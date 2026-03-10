@@ -45,10 +45,7 @@ export function DashboardLayout() {
   }
 
   return (
-    <div
-      className="min-h-screen bg-[#F8FAFC]"
-      style={{ fontFamily: "'Inter', sans-serif" }}
-    >
+    <div className="min-h-screen bg-background font-sans">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="lg:ml-64 min-h-screen flex flex-col">
         <Header title={title} onMenuClick={() => setSidebarOpen(true)} />

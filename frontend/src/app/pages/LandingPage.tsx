@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { useNavigate } from "react-router";
 import { GraduationCap, ArrowRight, BookOpen, TrendingUp, Lightbulb } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { Button } from "../components/ui/button";
 
 const features = [
   {
@@ -25,39 +26,32 @@ export function LandingPage() {
   const navigate = useNavigate();
 
   return (
-    <div
-      className="min-h-screen bg-[#F8FAFC] flex flex-col"
-      style={{ fontFamily: "'Inter', sans-serif" }}
-    >
+    <div className="min-h-screen bg-background flex flex-col font-sans">
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 md:px-12 py-5">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center">
-            <GraduationCap className="w-5 h-5 text-white" />
+          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
+            <GraduationCap className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="text-[#0F172A]" style={{ fontSize: "1.25rem", fontWeight: 700 }}>
+          <span className="text-foreground text-xl font-bold">
             SkillForge
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <Button
+            variant="ghost"
             onClick={() => navigate("/login")}
-            className="px-5 py-2.5 rounded-lg text-[#0F172A] hover:bg-gray-100 transition-colors cursor-pointer"
-            style={{ fontSize: "0.875rem", fontWeight: 500 }}
+            className="text-sm font-medium"
           >
             Log in
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          </Button>
+          <Button
+            variant="default"
             onClick={() => navigate("/signup")}
-            className="px-5 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
-            style={{ fontSize: "0.875rem", fontWeight: 500 }}
+            className="text-sm font-medium"
           >
             Sign up
-          </motion.button>
+          </Button>
         </div>
       </nav>
 
@@ -69,47 +63,35 @@ export function LandingPage() {
           transition={{ duration: 0.6 }}
           className="text-center max-w-3xl"
         >
-          <div
-            className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 rounded-full px-4 py-1.5 mb-6"
-            style={{ fontSize: "0.875rem", fontWeight: 500 }}
-          >
+          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-4 py-1.5 mb-6 text-sm font-medium">
             <Lightbulb className="w-4 h-4" />
             AI-Powered Learning
           </div>
-          <h1
-            className="text-[#0F172A] mb-4"
-            style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", fontWeight: 700, lineHeight: 1.1 }}
-          >
+          <h1 className="text-foreground mb-4 text-4xl md:text-5xl font-bold leading-[1.1]">
             Your Personalized
             <br />
-            <span className="text-blue-600">Learning Journey</span>
+            <span className="text-primary">Learning Journey</span>
           </h1>
-          <p
-            className="text-gray-500 max-w-xl mx-auto mb-8"
-            style={{ fontSize: "1.125rem", lineHeight: 1.6 }}
-          >
+          <p className="text-muted-foreground max-w-xl mx-auto mb-8 text-lg leading-relaxed">
             Get AI-driven recommendations, track progress, and follow a customized learning path
             designed just for you.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+            <Button
+              size="lg"
               onClick={() => navigate("/signup")}
-              className="flex items-center gap-2 px-7 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer"
-              style={{ fontSize: "1rem", fontWeight: 600 }}
+              className="flex items-center gap-2 rounded-xl text-base font-semibold px-7 py-6"
             >
               Get Started <ArrowRight className="w-5 h-5" />
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
               onClick={() => navigate("/login")}
-              className="px-7 py-3 rounded-xl border border-gray-200 text-[#0F172A] hover:bg-gray-50 transition-colors cursor-pointer"
-              style={{ fontSize: "1rem", fontWeight: 500 }}
+              className="rounded-xl text-base font-medium px-7 py-6"
             >
               Log in
-            </motion.button>
+            </Button>
           </div>
         </motion.div>
 
@@ -120,11 +102,11 @@ export function LandingPage() {
           transition={{ duration: 0.7, delay: 0.2 }}
           className="mt-16 w-full max-w-4xl"
         >
-          <div className="rounded-2xl overflow-hidden shadow-2xl border border-gray-200">
+          <div className="rounded-2xl overflow-hidden shadow-2xl border border-border">
             <ImageWithFallback
               src="https://images.unsplash.com/photo-1762330910399-95caa55acf04?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxvbmxpbmUlMjBsZWFybmluZyUyMGVkdWNhdGlvbiUyMHRlY2hub2xvZ3l8ZW58MXx8fHwxNzcyNjE0MzUxfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
               alt="Learning dashboard preview"
-              className="w-full h-auto object-cover"
+              className="w-full h-auto object-cover border-0"
             />
           </div>
         </motion.div>
@@ -137,18 +119,15 @@ export function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 + i * 0.1 }}
-              className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm"
+              className="bg-card text-card-foreground rounded-xl p-6 border border-border shadow-sm"
             >
-              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center mb-4">
-                <feature.icon className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                <feature.icon className="w-5 h-5 text-primary" />
               </div>
-              <h3
-                className="text-[#0F172A] mb-2"
-                style={{ fontSize: "1rem", fontWeight: 600 }}
-              >
+              <h3 className="text-foreground mb-2 text-base font-semibold">
                 {feature.title}
               </h3>
-              <p className="text-gray-500" style={{ fontSize: "0.875rem", lineHeight: 1.5 }}>
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 {feature.description}
               </p>
             </motion.div>
@@ -157,7 +136,7 @@ export function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-100 py-6 text-center text-gray-400" style={{ fontSize: "0.8125rem" }}>
+      <footer className="border-t border-border py-6 text-center text-muted-foreground text-[0.8125rem]">
         &copy; 2026 SkillForge. All rights reserved. <br />
         Created by Mahdi
       </footer>

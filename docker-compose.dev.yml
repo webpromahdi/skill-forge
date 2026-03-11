@@ -1,0 +1,31 @@
+services:
+  # ─── FRONTEND (React Dev Server) ──────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: build  # Stops the build at the Node.js stage, completely skipping Nginx!
+    container_name: skillforge-frontend-dev
+    command: npm run dev
+    volumes:
+      - ./frontend:/app      # Syncs your local frontend files into the container
+      - /app/node_modules    # Tells Docker to keep its own internal node_modules safe
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+  # ─── BACKEND (Node.js Dev Server) ─────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: skillforge-backend-dev
+    command: npm run dev     # Starts nodemon instead of standard node
+    volumes:
+      - ./backend:/app       # Syncs your local backend files into the container
+      - /app/node_modules    # Keeps internal node_modules safe
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./backend/.env

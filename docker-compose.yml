@@ -1,0 +1,25 @@
+
+services:
+  # ─── FRONTEND (React) ────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: skillforge-frontend
+    ports:
+      - "80:80"        # Map host port 80 to container port 80
+    depends_on:
+      - backend
+    restart: always
+
+  # ─── BACKEND (Node.js) ───────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: skillforge-backend
+    ports:
+      - "5000:5000"    # Map host port 5000 to container port 5000
+    env_file:
+      - ./backend/.env # Expose the backend .env file securely to the container
+    restart: always

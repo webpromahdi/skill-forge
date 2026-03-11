@@ -1,7 +1,7 @@
 // ─── API Configuration ──────────────────────────────────────────────────────
 // Central place to define the backend base URL.
 // All service modules import this constant so the URL is never duplicated.
-export const API_BASE = "http://localhost:5000/api";
+export const API_BASE = import.meta.env.VITE_API_URL || "/api";
 
 // ─── apiFetch ───────────────────────────────────────────────────────────────
 // Generic fetch wrapper that automatically:

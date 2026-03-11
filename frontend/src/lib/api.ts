@@ -1,7 +1,14 @@
+/// <reference types="vite/client" />
 // ─── API Configuration ──────────────────────────────────────────────────────
 // Central place to define the backend base URL.
 // All service modules import this constant so the URL is never duplicated.
-export const API_BASE = import.meta.env.VITE_API_URL || "/api";
+// Capture the env variable
+const envUrl = import.meta.env.VITE_API_URL;
+
+// Safely format the base URL so it always ends with /api (without double slashes)
+export const API_BASE = envUrl 
+  ? (envUrl.endsWith('/api') ? envUrl : `${envUrl.replace(/\/$/, '')}/api`) 
+  : "/api";
 
 // ─── apiFetch ───────────────────────────────────────────────────────────────
 // Generic fetch wrapper that automatically:
